@@ -25,3 +25,4 @@ replay_pid*
 /.idea/
 /backend/.gradle/
 /backend/build/
+/TASK_PLAN.md

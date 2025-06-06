@@ -13,20 +13,7 @@ The Live Kubernetes Mapping Tool provides a **real-time, animated map of your ap
 
 ## 🏗️ System Architecture
 
-```
-+--------------------+        API / WebSocket        +-------------------------+
-| Kubernetes Cluster |  <--------------------------> | Java Backend Service    |
-| (Live resources)   |                               | (Spring Boot / Quarkus) |
-+--------------------+                               +-----------+-------------+
-                                                               |
-                                                       JSON Topology Model
-                                                               |
-                                                               v
-                                           +-------------------+------------------+
-                                           | Frontend Web App (React/Svelte/Vue) |
-                                           | (Graph rendering with animations)   |
-                                           +-------------------------------------+
-```
+![System Architecture](docs/img.png)
 
 ---
 
