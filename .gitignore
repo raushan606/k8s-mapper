@@ -26,3 +26,5 @@ replay_pid*
 /backend/.gradle/
 /backend/build/
 /TASK_PLAN.md
+/frontend/package-lock.json
+/frontend/node_modules/
