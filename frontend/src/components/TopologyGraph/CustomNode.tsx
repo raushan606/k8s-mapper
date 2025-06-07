@@ -34,6 +34,16 @@ const nodeTypeStyles: Record<ResourceType, { bgcolor: string; color: string; bor
         color: '#fff',
         borderColor: '#EA580C',
     },
+    [ResourceType.SECRETS]: {
+      bgcolor: '#EDA',
+      color: '#fff',
+      borderColor: '#EA3873'
+    },
+    [ResourceType.CONFIGMAP]: {
+      bgcolor: '#32E',
+      color: '#fff',
+      borderColor: '#DD3'
+    }
 };
 
 interface CustomNodeProps {

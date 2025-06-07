@@ -65,10 +65,10 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
 
       const filteredEdges = namespace
         ? initialData.edges.filter(edge => {
-            const sourceNode = initialData.nodes.find(n => n.id === edge.source);
-            const targetNode = initialData.nodes.find(n => n.id === edge.target);
-            return sourceNode?.namespace === namespace && targetNode?.namespace === namespace;
-          })
+          const sourceNode = initialData.nodes.find(n => n.id === edge.source);
+          const targetNode = initialData.nodes.find(n => n.id === edge.target);
+          return sourceNode?.namespace === namespace && targetNode?.namespace === namespace;
+        })
         : initialData.edges;
 
       // Organize nodes by namespace
@@ -185,9 +185,9 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
             style={{ opacity: 0.2 }}
           />
           <Controls
-          position='top-left'
+            position='top-left'
             style={{
-             
+
               left: 10,
               top: 10,
               backgroundColor: 'rgba(255,255,255,0.9)',
@@ -197,8 +197,8 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
             }}
           />
           <MiniMap
-          position='top-right'
-          nodeStrokeColor={() => '#483'}
+            position='top-right'
+            nodeStrokeColor={() => '#483'}
             style={{
               right: 10,
               top: 10,
@@ -213,7 +213,7 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
               onClose={() => setSelectedNode(null)}
             />
           )}
-          <Box sx={{
+          {/* <Box sx={{
             position: 'absolute',
             bottom: 0,
             left: 0,
@@ -223,7 +223,7 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
             zIndex: 10,
           }}>
             <Grid container spacing={2}>
-              <Grid size={{xs:12, md:4}}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Paper elevation={0} sx={{
                   p: 2,
                   borderRadius: 3,
@@ -240,7 +240,7 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>12 Active</Typography>
                 </Paper>
               </Grid>
-              <Grid size={{xs:12, md:4}}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Paper elevation={0} sx={{
                   p: 2,
                   borderRadius: 3,
@@ -257,7 +257,7 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
                   <Typography variant="body2" sx={{ color: 'text.primary' }}>Storage 32%</Typography>
                 </Paper>
               </Grid>
-              <Grid size={{xs:12, md:4}}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Paper elevation={0} sx={{
                   p: 2,
                   borderRadius: 3,
@@ -275,7 +275,7 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
                 </Paper>
               </Grid>
             </Grid>
-          </Box>
+          </Box> */}
         </ReactFlow>
       </Box>
     </Box>

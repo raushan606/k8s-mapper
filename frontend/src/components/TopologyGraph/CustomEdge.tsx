@@ -1,5 +1,5 @@
 import React from 'react';
-import { BaseEdge, EdgeProps, getBezierPath } from 'reactflow';
+import { BaseEdge, EdgeProps, getSmoothStepPath } from 'reactflow';
 
 export const CustomEdge: React.FC<EdgeProps> = ({
   id,
@@ -12,7 +12,7 @@ export const CustomEdge: React.FC<EdgeProps> = ({
   style = {},
   markerEnd,
 }) => {
-  const [edgePath] = getBezierPath({
+  const [edgePath] = getSmoothStepPath({
     sourceX,
     sourceY,
     sourcePosition,
@@ -31,19 +31,21 @@ export const CustomEdge: React.FC<EdgeProps> = ({
           stroke: '#8B5CF6',
           strokeWidth: 2,
           opacity: 0.85,
+          zIndex: 0,
         }}
       />
       <svg style={{ position: 'absolute', width: 0, height: 0 }}>
         <defs>
           <marker
             id="arrowhead"
-            markerWidth="10"
-            markerHeight="7"
-            refX="9"
-            refY="3.5"
+            markerWidth="12"
+            markerHeight="12"
+            refX="11"
+            refY="6"
             orient="auto"
+            markerUnits="userSpaceOnUse"
           >
-            <polygon points="0 0, 10 3.5, 0 7" fill="#8B5CF6" />
+            <polygon points="0 0, 12 6, 0 12, 3 6" fill="#8B5CF6" />
           </marker>
         </defs>
       </svg>

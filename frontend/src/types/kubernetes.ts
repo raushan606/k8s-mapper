@@ -1,12 +1,14 @@
 import { Node, Edge, XYPosition } from 'reactflow';
 
 export const enum ResourceType {
-  NAMESPACE = 'namespace',
-  POD = 'pod',
-  SERVICE = 'service',
-  INGRESS = 'ingress',
-  DEPLOYMENT = 'deployment',
-  REPLICASET = 'replicaset',
+  NAMESPACE = 'NAMESPACE',
+  POD = 'POD',
+  SERVICE = 'SERVICE',
+  INGRESS = 'INGRESS',
+  DEPLOYMENT = 'DEPLOYMENT',
+  REPLICASET = 'REPLICASET',
+  SECRETS = 'SECRETS',
+  CONFIGMAP = 'CONFIGMAP'
 }
 
 export interface KubernetesResource {
