@@ -37,7 +37,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, onRefresh }) =
                         display: 'flex',
                         flexDirection: 'column',
                         overflow: 'hidden',
-                        p: 3,
                         bgcolor: 'background.default',
                     }}
                 >

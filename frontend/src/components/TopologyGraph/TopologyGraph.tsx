@@ -10,7 +10,7 @@ import ReactFlow, {
   ReactFlowProvider,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Box, Paper } from '@mui/material';
+import { Box, Paper, Grid, Typography } from '@mui/material';
 import { CustomNode } from './CustomNode';
 import { CustomEdge } from './CustomEdge';
 import { NodeDetailsPanel } from './NodeDetailsPanel';
@@ -146,20 +146,21 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
   }, [onLoad]);
 
   return (
-    <Paper
-      elevation={2}
+    <Box
       sx={{
         width: '100%',
-        height: 380,
+        height: '100%',
         bgcolor: '#fff',
         borderRadius: 3,
         boxShadow: '0 2px 16px 0 rgba(0,0,0,0.06)',
         p: 0,
         overflow: 'hidden',
         position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
-      <Box sx={{ width: '100%', height: '100%' }}>
+      <Box sx={{ width: '100%', flex: 1 }}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -173,6 +174,8 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
           attributionPosition="bottom-left"
           style={{
             background: 'transparent',
+            width: '100%',
+            height: '100%',
           }}
         >
           <Background
@@ -182,7 +185,11 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
             style={{ opacity: 0.2 }}
           />
           <Controls
+          position='top-left'
             style={{
+             
+              left: 10,
+              top: 10,
               backgroundColor: 'rgba(255,255,255,0.9)',
               border: '1px solid #E5E7EB',
               borderRadius: '8px',
@@ -190,10 +197,13 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
             }}
           />
           <MiniMap
+          position='top-right'
+          nodeStrokeColor={() => '#483'}
             style={{
-              backgroundColor: 'rgba(243,244,246,0.9)',
-              border: '1px solid #E5E7EB',
-              borderRadius: '8px',
+              right: 10,
+              top: 10,
+              border: '1px solid #ed3',
+              borderRadius: '4px',
             }}
             nodeColor={() => '#8B5CF6'}
           />
@@ -203,9 +213,72 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
               onClose={() => setSelectedNode(null)}
             />
           )}
+          <Box sx={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            p: 2,
+            background: 'linear-gradient(to top, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 100%)',
+            zIndex: 10,
+          }}>
+            <Grid container spacing={2}>
+              <Grid size={{xs:12, md:4}}>
+                <Paper elevation={0} sx={{
+                  p: 2,
+                  borderRadius: 3,
+                  border: '1px solid #E5E7EB',
+                  minHeight: 120,
+                  backdropFilter: 'blur(8px)',
+                  bgcolor: 'rgba(255, 255, 255, 0.8)'
+                }}>
+                  <Typography variant="subtitle2" sx={{ color: 'text.secondary', fontWeight: 600, mb: 1 }}>
+                    Cluster Health
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'text.primary' }}>3/3 Ready</Typography>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>28/30 Running</Typography>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>12 Active</Typography>
+                </Paper>
+              </Grid>
+              <Grid size={{xs:12, md:4}}>
+                <Paper elevation={0} sx={{
+                  p: 2,
+                  borderRadius: 3,
+                  border: '1px solid #E5E7EB',
+                  minHeight: 120,
+                  backdropFilter: 'blur(8px)',
+                  bgcolor: 'rgba(255, 255, 255, 0.8)'
+                }}>
+                  <Typography variant="subtitle2" sx={{ color: 'text.secondary', fontWeight: 600, mb: 1 }}>
+                    Resource Usage
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'text.primary' }}>CPU 67%</Typography>
+                  <Typography variant="body2" sx={{ color: 'text.primary' }}>Memory 54%</Typography>
+                  <Typography variant="body2" sx={{ color: 'text.primary' }}>Storage 32%</Typography>
+                </Paper>
+              </Grid>
+              <Grid size={{xs:12, md:4}}>
+                <Paper elevation={0} sx={{
+                  p: 2,
+                  borderRadius: 3,
+                  border: '1px solid #E5E7EB',
+                  minHeight: 120,
+                  backdropFilter: 'blur(8px)',
+                  bgcolor: 'rgba(255, 255, 255, 0.8)'
+                }}>
+                  <Typography variant="subtitle2" sx={{ color: 'text.secondary', fontWeight: 600, mb: 1 }}>
+                    Recent Events
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'text.primary' }}>Pod Created</Typography>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>Service Updated</Typography>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>Node Warning</Typography>
+                </Paper>
+              </Grid>
+            </Grid>
+          </Box>
         </ReactFlow>
       </Box>
-    </Paper>
+    </Box>
   );
 };
 
