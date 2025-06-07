@@ -4,7 +4,7 @@ import { TopologyGraph } from './components/TopologyGraph/TopologyGraph';
 import { MainLayout } from './components/Layout/MainLayout';
 import { Sidebar } from './components/Sidebar/Sidebar';
 import { TopologyData, K8sWebSocketData, ResourceType, NodeData as K8sNodeData } from './types/kubernetes';
-import { Box, CircularProgress, Alert, ThemeProvider } from '@mui/material';
+import { ThemeProvider } from '@mui/material';
 import { theme } from './theme';
 import { MainContent } from './components/Layout/MainContent';
 
@@ -61,14 +61,13 @@ export const App: React.FC = () => {
         const namespaceList = Object.entries(data.namespaces).map(([id, ns]) => ({
           id,
           name: ns.name,
-          podCount: ns.nodes.filter(node => node.type === ResourceType.POD).length, // Get pod count
-          color: ns.nodes.some(node => node.type === ResourceType.POD) ? '#3ECF8E' : '#A3A3A3', // Example color
+          podCount: ns.nodes.filter(node => node.type === ResourceType.POD).length,
+          color: ns.nodes.some(node => node.type === ResourceType.POD) ? '#3ECF8E' : '#A3A3A3',
         }));
         console.log('Extracted namespaces:', namespaceList);
 
         // Extract all nodes and edges from namespaces
         const allNodes: K8sNodeData[] = Object.entries(data.namespaces).flatMap(([namespaceId, ns], namespaceIndex) => {
-          // Add namespace node (if needed, otherwise rely on the graph layout)
           const namespaceNode: K8sNodeData = {
             id: namespaceId,
             name: ns.name,
@@ -77,14 +76,12 @@ export const App: React.FC = () => {
             position: { x: namespaceIndex * 400, y: 0 },
           };
 
-          // Add all nodes from this namespace with calculated positions
           const namespaceNodes: K8sNodeData[] = ns.nodes.map((node, index) => ({
             ...node,
             namespace: namespaceId,
             position: node.position || generateNodePosition(index, ns.nodes.length, namespaceIndex),
-            // Ensure status, cpu, ram, role are passed if available
             status: node.status || undefined,
-            cpu: (node as any).cpu || undefined, // Cast to any to access properties not directly in NodeData if API sends them
+            cpu: (node as any).cpu || undefined,
             ram: (node as any).ram || undefined,
             role: (node as any).role || undefined,
           }));
@@ -116,47 +113,6 @@ export const App: React.FC = () => {
     setSelectedNamespace(namespaceId);
   };
 
-  if (loading) {
-    return (
-      <ThemeProvider theme={theme}>
-        <MainLayout>
-          <Box
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            height="100%"
-          >
-            <CircularProgress size={24} />
-          </Box>
-          <Box flex={1} />
-        </MainLayout>
-      </ThemeProvider>
-    );
-  }
-
-  if (error) {
-    return (
-      <ThemeProvider theme={theme}>
-        <MainLayout>
-          <Box
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            height="100%"
-          >
-            <Alert severity="error" sx={{ maxWidth: 400 }}>
-              {error}
-            </Alert>
-          </Box>
-          <Box flex={1} />
-        </MainLayout>
-      </ThemeProvider>
-    );
-  }
-
-  console.log('Current topology data:', topologyData);
-  console.log('Selected namespace:', selectedNamespace);
-
   return (
     <ThemeProvider theme={theme}>
       <MainLayout>
@@ -165,9 +121,12 @@ export const App: React.FC = () => {
           selectedNamespace={selectedNamespace}
           onNamespaceSelect={handleNamespaceChange}
         />
-        <MainContent namespace={selectedNamespace} initialData={topologyData}>
-          {/* TopologyGraph is now rendered inside MainContent */}
-        </MainContent>
+        <MainContent 
+          namespace={selectedNamespace} 
+          initialData={topologyData}
+          isLoading={loading}
+          error={error}
+        />
       </MainLayout>
     </ThemeProvider>
   );

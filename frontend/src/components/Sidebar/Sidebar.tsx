@@ -144,7 +144,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         textOverflow: 'ellipsis',
                       }}
                     >
-                      {namespace.name}
+                      {namespace.id}
                     </Typography>
                   }
                 />
@@ -169,7 +169,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         ))}
       </List>
       <Divider sx={{ my: 2, borderColor: 'rgba(62, 207, 142, 0.2)' }} />
-      {/* RESOURCES SECTION */}
+      {/* RESOURCES SECTION
       <Typography
         variant="subtitle2"
         sx={{
@@ -199,7 +199,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </ListItemButton>
           </ListItem>
         ))}
-      </List>
+      </List> */}
     </Box>
   );
 }; 

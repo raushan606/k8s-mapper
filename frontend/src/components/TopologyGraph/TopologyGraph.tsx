@@ -27,6 +27,7 @@ const edgeTypes = {
 interface TopologyGraphProps {
   initialData: TopologyData;
   namespace: string | null | undefined;
+  onLoad?: () => void;
 }
 
 // Helper function to generate a position for a node (moved from App.tsx)
@@ -38,7 +39,7 @@ const generateNodePosition = (index: number, total: number, namespaceIndex: numb
   return { x, y };
 };
 
-const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespace }) => {
+const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespace, onLoad }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
@@ -137,6 +138,12 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
       setEdges([]);
     }
   }, [initialData, namespace, setNodes, setEdges]);
+
+  useEffect(() => {
+    if (onLoad) {
+      onLoad();
+    }
+  }, [onLoad]);
 
   return (
     <Paper
