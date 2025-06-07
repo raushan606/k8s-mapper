@@ -1,18 +1,22 @@
 package com.raushan.k8smapper.service;
 
+import com.raushan.k8smapper.websocket.TopologyWebSocketPublisher;
 import io.fabric8.kubernetes.client.*;
 import io.fabric8.kubernetes.client.dsl.*;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.function.BiConsumer;
 import java.util.logging.Logger;
 
 @Service
+@RequiredArgsConstructor
 public class K8sWatcherService {
 
     private final Logger log = Logger.getLogger(K8sWatcherService.class.getName());
     private final K8sTopologyStore topologyStore = new K8sTopologyStore();
+    private TopologyWebSocketPublisher topologyWebSocketPublisher;
 
     @PostConstruct
     public void watchAllResources() {
@@ -94,6 +98,7 @@ public class K8sWatcherService {
             public void eventReceived(Action action, T resource) {
                 try {
                     handler.accept(action, resource);
+                    topologyWebSocketPublisher.publishGraph(topologyStore);
                     log.info(resourceType + " " + action + " event processed for: " + resource);
                 } catch (Exception e) {
                     log.severe("Error processing " + resourceType + " event: " + e.getMessage());
@@ -109,9 +114,5 @@ public class K8sWatcherService {
                 }
             }
         });
-    }
-
-    public K8sTopologyStore getTopologyStore() {
-        return topologyStore;
     }
 }

@@ -7,11 +7,13 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.ReplicaSet;
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import lombok.Getter;
+import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
+@Component
 public class K8sTopologyStore {
     private final Map<String, Pod> pods = new ConcurrentHashMap<>();
     private final Map<String, Deployment> deployments = new ConcurrentHashMap<>();

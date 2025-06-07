@@ -7,14 +7,14 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class ServiceNode extends TopologyNode {
     private String clusterIP;
-    private String type;
+    private ResourceType type;
 
     public ServiceNode() {
         super();
         setType(ResourceType.SERVICE);
     }
 
-    public ServiceNode(String id, String name, String namespace, String clusterIP, String type) {
+    public ServiceNode(String id, String name, String namespace, String clusterIP, ResourceType type) {
         super(id, name, namespace, ResourceType.SERVICE);
         this.clusterIP = clusterIP;
         this.type = type;

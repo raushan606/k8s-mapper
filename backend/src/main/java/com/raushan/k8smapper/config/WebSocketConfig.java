@@ -1,6 +1,5 @@
 package com.raushan.k8smapper.config;
 
-import com.raushan.k8smapper.service.PodWebSocketHandler;
 import com.raushan.k8smapper.websocket.TopologyWebSocketHandler;
 import com.raushan.k8smapper.websocket.TopologyWebSocketPublisher;
 import lombok.RequiredArgsConstructor;

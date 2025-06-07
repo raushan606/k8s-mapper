@@ -7,8 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TopologyEdge {
-    private String fromId;
-    private String toId;
-    private String relation; // e.g., "connects-to", "routes-to"
+public class GenericResourceNode {
+    private String name;
+    private String namespace;
+    private ResourceType type; // e.g., ConfigMap, Secret, Deployment
 }
