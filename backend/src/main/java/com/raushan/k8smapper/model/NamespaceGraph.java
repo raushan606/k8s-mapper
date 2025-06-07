@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TopologyGraph {
+public class NamespaceGraph {
     private List<TopologyNode> nodes = new ArrayList<>();
     private List<TopologyEdge> edges = new ArrayList<>();
 }

@@ -10,5 +10,5 @@ import lombok.NoArgsConstructor;
 public class TopologyEdge {
     private String fromId;
     private String toId;
-    private String relation; // e.g., "connects-to", "routes-to"
+//    private String relation; // e.g., "connects-to", "routes-to"
 }

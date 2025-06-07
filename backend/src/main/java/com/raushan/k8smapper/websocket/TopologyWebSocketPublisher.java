@@ -1,11 +1,9 @@
 package com.raushan.k8smapper.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.raushan.k8smapper.model.TopologyGraph;
 import com.raushan.k8smapper.service.K8sTopologyStore;
 import com.raushan.k8smapper.service.TopologyBuilderService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -31,7 +29,7 @@ public class TopologyWebSocketPublisher {
     // TODO: Uncomment to enable periodic updates
 //    @Scheduled(fixedRate = 5000)
     public void publishGraph() {
-        TopologyGraph graph = topologyBuilder.buildGraph(topologyStore);
+        var graph = topologyBuilder.buildFromStore(topologyStore);
 
         sessions.forEach(handler -> {
             try {
@@ -44,7 +42,7 @@ public class TopologyWebSocketPublisher {
     }
 
     public void publishGraph(K8sTopologyStore store) {
-        TopologyGraph graph = topologyBuilder.buildGraph(store);
+        var graph = topologyBuilder.buildFromStore(store);
 
         sessions.forEach(handler -> {
             try {

@@ -1,206 +1,271 @@
 package com.raushan.k8smapper.service;
 
+import com.raushan.k8smapper.model.NamespaceGraph;
+import com.raushan.k8smapper.model.NamespacedGraphResponse;
 import com.raushan.k8smapper.model.ResourceType;
 import com.raushan.k8smapper.model.TopologyEdge;
-import com.raushan.k8smapper.model.TopologyGraph;
 import com.raushan.k8smapper.model.TopologyNode;
 import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.Container;
+import io.fabric8.kubernetes.api.model.EnvFromSource;
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressPath;
-import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressRuleValue;
+import io.fabric8.kubernetes.api.model.apps.ReplicaSet;
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
-import io.fabric8.kubernetes.api.model.networking.v1.IngressRule;
-import io.fabric8.kubernetes.client.KubernetesClient;
-import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
 
 @Service
 public class TopologyBuilderService {
+    public NamespacedGraphResponse buildFromStore(K8sTopologyStore store) {
+        Map<String, NamespaceGraph> nsGraphs = new HashMap<>();
 
-    public TopologyGraph buildGraph(K8sTopologyStore store) {
-        TopologyGraph graph = new TopologyGraph();
+        Set<String> allNamespaces = new HashSet<>();
+        allNamespaces.addAll(store.getServicesByNamespace().keySet());
+        allNamespaces.addAll(store.getPodsByNamespace().keySet());
+        allNamespaces.addAll(store.getDeploymentsByNamespace().keySet());
+        allNamespaces.addAll(store.getReplicaSetsByNamespace().keySet());
+        allNamespaces.addAll(store.getConfigMapsByNamespace().keySet());
+        allNamespaces.addAll(store.getSecretsByNamespace().keySet());
+        allNamespaces.addAll(store.getIngressesByNamespace().keySet());
 
-        Map<String, TopologyNode> nodeMap = getTopologyNodeMap(store);
+        for (String namespace : allNamespaces) {
+            NamespaceGraph nsGraph = new NamespaceGraph();
 
-        graph.getNodes().addAll(nodeMap.values());
+            Map<String, TopologyNode> nodes = new HashMap<>();
+            List<TopologyEdge> edges = new ArrayList<>();
 
-        // ---------------- Edges ----------------
+            // Helper to create node ID with type prefix
+            Function<String, String> serviceId = uid -> "service:" + uid;
+            Function<String, String> podId = uid -> "pod:" + uid;
+            Function<String, String> deploymentId = uid -> "deployment:" + uid;
+            Function<String, String> rsId = uid -> "replicaset:" + uid;
+            Function<String, String> cmId = uid -> "configmap:" + uid;
+            Function<String, String> secretId = uid -> "secret:" + uid;
+            Function<String, String> ingressId = uid -> "ingress:" + uid;
 
-        // Deployment ➝ Pod (via ownerReference)
-        for (Pod pod : store.getPods().values()) {
-            if (pod.getMetadata().getOwnerReferences() != null) {
-                for (OwnerReference owner : pod.getMetadata().getOwnerReferences()) {
-                    if ("Deployment".equals(owner.getKind())) {
-                        String fromId = "deployment:" + owner.getUid();
-                        String toId = "pod:" + pod.getMetadata().getUid();
-                        graph.getEdges().add(new TopologyEdge(fromId, toId, "controls"));
+            // Add all resources as nodes
+
+            // Services
+            Map<String, io.fabric8.kubernetes.api.model.Service> services = store.getServicesByNamespace().getOrDefault(namespace, Collections.emptyMap());
+            services.forEach((name, svc) -> {
+                String id = serviceId.apply(svc.getMetadata().getUid());
+                nodes.put(id, new TopologyNode(id, name, namespace, ResourceType.SERVICE));
+            });
+
+            // Deployments
+            Map<String, Deployment> deployments = store.getDeploymentsByNamespace().getOrDefault(namespace, Collections.emptyMap());
+            deployments.forEach((name, dep) -> {
+                String id = deploymentId.apply(dep.getMetadata().getUid());
+                nodes.put(id, new TopologyNode(id, name, namespace, ResourceType.DEPLOYMENT));
+            });
+
+            // ReplicaSets
+            Map<String, ReplicaSet> replicaSets = store.getReplicaSetsByNamespace().getOrDefault(namespace, Collections.emptyMap());
+            replicaSets.forEach((name, rs) -> {
+                String id = rsId.apply(rs.getMetadata().getUid());
+                nodes.put(id, new TopologyNode(id, name, namespace, ResourceType.REPLICASET));
+            });
+
+            // Pods
+            Map<String, Pod> pods = store.getPodsByNamespace().getOrDefault(namespace, Collections.emptyMap());
+            pods.forEach((name, pod) -> {
+                String id = podId.apply(pod.getMetadata().getUid());
+                nodes.putIfAbsent(id, new TopologyNode(id, name, namespace, ResourceType.POD));
+            });
+
+            // ConfigMaps
+            Map<String, ConfigMap> configMaps = store.getConfigMapsByNamespace().getOrDefault(namespace, Collections.emptyMap());
+            configMaps.forEach((name, cm) -> {
+                String id = cmId.apply(cm.getMetadata().getUid());
+                nodes.put(id, new TopologyNode(id, name, namespace, ResourceType.CONFIGMAP));
+            });
+
+            // Secrets
+            Map<String, Secret> secrets = store.getSecretsByNamespace().getOrDefault(namespace, Collections.emptyMap());
+            secrets.forEach((name, sec) -> {
+                String id = secretId.apply(sec.getMetadata().getUid());
+                nodes.put(id, new TopologyNode(id, name, namespace, ResourceType.SECRETS));
+            });
+
+            // Ingresses
+            Map<String, Ingress> ingresses = store.getIngressesByNamespace().getOrDefault(namespace, Collections.emptyMap());
+            ingresses.forEach((name, ing) -> {
+                String id = ingressId.apply(ing.getMetadata().getUid());
+                nodes.put(id, new TopologyNode(id, name, namespace, ResourceType.INGRESS));
+            });
+
+            // Now add edges
+
+            // 1. Service -> Pod (via selector)
+            services.forEach((name, svc) -> {
+                String svcNodeId = serviceId.apply(svc.getMetadata().getUid());
+                Map<String, String> selector = svc.getSpec().getSelector();
+                if (selector != null) {
+                    pods.forEach((podName, pod) -> {
+                        Map<String, String> labels = pod.getMetadata().getLabels();
+                        if (labels != null && labels.entrySet().containsAll(selector.entrySet())) {
+                            String podNodeId = podId.apply(pod.getMetadata().getUid());
+                            edges.add(new TopologyEdge(svcNodeId, podNodeId));
+                        }
+                    });
+                }
+            });
+
+            // 2. Deployment -> ReplicaSet (deployment owns replicasets)
+            replicaSets.forEach((rsName, rs) -> {
+                String rsNodeId = rsId.apply(rs.getMetadata().getUid());
+                OwnerReference owner = findOwnerReference(rs.getMetadata().getOwnerReferences(), "Deployment");
+                if (owner != null) {
+                    deployments.forEach((depName, dep) -> {
+                        if (dep.getMetadata().getUid().equals(owner.getUid())) {
+                            String depNodeId = deploymentId.apply(dep.getMetadata().getUid());
+                            edges.add(new TopologyEdge(depNodeId, rsNodeId));
+                        }
+                    });
+                }
+            });
+
+            // 3. ReplicaSet -> Pod (replicaset owns pods)
+            pods.forEach((podName, pod) -> {
+                String podNodeId = podId.apply(pod.getMetadata().getUid());
+                OwnerReference owner = findOwnerReference(pod.getMetadata().getOwnerReferences(), "ReplicaSet");
+                if (owner != null) {
+                    replicaSets.forEach((rsName, rs) -> {
+                        if (rs.getMetadata().getUid().equals(owner.getUid())) {
+                            String rsNodeId = rsId.apply(rs.getMetadata().getUid());
+                            edges.add(new TopologyEdge(rsNodeId, podNodeId));
+                        }
+                    });
+                }
+            });
+
+            // 4. Pod -> ConfigMap (via volumes or envFrom)
+            pods.forEach((podName, pod) -> {
+                String podNodeId = podId.apply(pod.getMetadata().getUid());
+
+                // Check volumes
+                if (pod.getSpec() != null && pod.getSpec().getVolumes() != null) {
+                    for (Volume vol : pod.getSpec().getVolumes()) {
+                        if (vol.getConfigMap() != null) {
+                            String cmName = vol.getConfigMap().getName();
+                            configMaps.forEach((cmNameKey, cm) -> {
+                                if (cmNameKey.equals(cmName)) {
+                                    String cmNodeId = cmId.apply(cm.getMetadata().getUid());
+                                    edges.add(new TopologyEdge(podNodeId, cmNodeId));
+                                }
+                            });
+                        }
                     }
                 }
-            }
-        }
 
-        // Service ➝ Pod (via label selectors)
-        for (io.fabric8.kubernetes.api.model.Service svc : store.getServices().values()) {
-            Map<String, String> selector = svc.getSpec().getSelector();
-            if (selector != null && !selector.isEmpty()) {
-                for (Pod pod : store.getPods().values()) {
-                    Map<String, String> labels = pod.getMetadata().getLabels();
-                    if (labels != null && labels.entrySet().containsAll(selector.entrySet())) {
-                        String fromId = "service:" + svc.getMetadata().getUid();
-                        String toId = "pod:" + pod.getMetadata().getUid();
-                        graph.getEdges().add(new TopologyEdge(fromId, toId, "routes-to"));
-                    }
-                }
-            }
-        }
-
-        // Ingress ➝ Service (via backend service name)
-        for (Ingress ing : store.getIngresses().values()) {
-            List<IngressRule> rules = ing.getSpec().getRules();
-            if (rules != null) {
-                for (IngressRule rule : rules) {
-                    HTTPIngressRuleValue http = rule.getHttp();
-                    if (http != null && http.getPaths() != null) {
-                        for (HTTPIngressPath path : http.getPaths()) {
-                            if (path.getBackend() != null && path.getBackend().getService() != null) {
-                                String svcName = path.getBackend().getService().getName();
-                                String ns = ing.getMetadata().getNamespace();
-
-                                Optional<io.fabric8.kubernetes.api.model.Service> svc = store.getServices().values().stream()
-                                        .filter(s -> s.getMetadata().getName().equals(svcName) &&
-                                                s.getMetadata().getNamespace().equals(ns))
-                                        .findFirst();
-
-                                svc.ifPresent(service -> graph.getEdges().add(new TopologyEdge(
-                                        "ingress:" + ing.getMetadata().getUid(),
-                                        "service:" + service.getMetadata().getUid(),
-                                        "routes-to"
-                                )));
+                // Check envFrom configMaps
+                if (pod.getSpec() != null && pod.getSpec().getContainers() != null) {
+                    for (Container container : pod.getSpec().getContainers()) {
+                        if (container.getEnvFrom() != null) {
+                            for (EnvFromSource envFrom : container.getEnvFrom()) {
+                                if (envFrom.getConfigMapRef() != null) {
+                                    String cmName = envFrom.getConfigMapRef().getName();
+                                    configMaps.forEach((cmNameKey, cm) -> {
+                                        if (cmNameKey.equals(cmName)) {
+                                            String cmNodeId = cmId.apply(cm.getMetadata().getUid());
+                                            edges.add(new TopologyEdge(podNodeId, cmNodeId));
+                                        }
+                                    });
+                                }
                             }
                         }
                     }
                 }
-            }
-        }
+            });
 
-        // Pod ➝ ConfigMap / Secret (via envFrom, volumes)
-        for (Pod pod : store.getPods().values()) {
-            String podId = "pod:" + pod.getMetadata().getUid();
+            // 5. Pod -> Secret (via volumes or envFrom)
+            pods.forEach((podName, pod) -> {
+                String podNodeId = podId.apply(pod.getMetadata().getUid());
 
-            if (pod.getSpec() != null) {
-                List<Volume> volumes = pod.getSpec().getVolumes();
-                if (volumes != null) {
-                    for (Volume vol : volumes) {
-                        if (vol.getConfigMap() != null) {
-                            String name = vol.getConfigMap().getName();
-                            String ns = pod.getMetadata().getNamespace();
-                            Optional<ConfigMap> cm = store.getConfigMaps().values().stream()
-                                    .filter(c -> c.getMetadata().getName().equals(name) && c.getMetadata().getNamespace().equals(ns))
-                                    .findFirst();
-
-                            cm.ifPresent(configMap -> graph.getEdges().add(new TopologyEdge(
-                                    podId,
-                                    "configmap:" + configMap.getMetadata().getUid(),
-                                    "uses"
-                            )));
-                        }
-
+                // Volumes
+                if (pod.getSpec() != null && pod.getSpec().getVolumes() != null) {
+                    for (Volume vol : pod.getSpec().getVolumes()) {
                         if (vol.getSecret() != null) {
-                            String name = vol.getSecret().getSecretName();
-                            String ns = pod.getMetadata().getNamespace();
-                            Optional<Secret> sec = store.getSecrets().values().stream()
-                                    .filter(s -> s.getMetadata().getName().equals(name) && s.getMetadata().getNamespace().equals(ns))
-                                    .findFirst();
-
-                            sec.ifPresent(secret -> graph.getEdges().add(new TopologyEdge(
-                                    podId,
-                                    "secret:" + secret.getMetadata().getUid(),
-                                    "uses"
-                            )));
+                            String secretName = vol.getSecret().getSecretName();
+                            secrets.forEach((secretNameKey, sec) -> {
+                                if (secretNameKey.equals(secretName)) {
+                                    String secretNodeId = secretId.apply(sec.getMetadata().getUid());
+                                    edges.add(new TopologyEdge(podNodeId, secretNodeId));
+                                }
+                            });
                         }
                     }
                 }
-            }
+
+                // EnvFrom secrets
+                if (pod.getSpec() != null && pod.getSpec().getContainers() != null) {
+                    for (Container container : pod.getSpec().getContainers()) {
+                        if (container.getEnvFrom() != null) {
+                            for (EnvFromSource envFrom : container.getEnvFrom()) {
+                                if (envFrom.getSecretRef() != null) {
+                                    String secretName = envFrom.getSecretRef().getName();
+                                    secrets.forEach((secretNameKey, sec) -> {
+                                        if (secretNameKey.equals(secretName)) {
+                                            String secretNodeId = secretId.apply(sec.getMetadata().getUid());
+                                            edges.add(new TopologyEdge(podNodeId, secretNodeId));
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 6. Ingress -> Service (via ingress backend serviceName)
+            ingresses.forEach((ingName, ing) -> {
+                String ingNodeId = ingressId.apply(ing.getMetadata().getUid());
+                if (ing.getSpec() != null && ing.getSpec().getRules() != null) {
+                    ing.getSpec().getRules().forEach(rule -> {
+                        if (rule.getHttp() != null && rule.getHttp().getPaths() != null) {
+                            rule.getHttp().getPaths().forEach(path -> {
+                                if (path.getBackend() != null && path.getBackend().getService() != null) {
+                                    String backendSvcName = path.getBackend().getService().getName();
+                                    io.fabric8.kubernetes.api.model.Service svc = services.get(backendSvcName);
+                                    if (svc != null) {
+                                        String svcNodeId = serviceId.apply(svc.getMetadata().getUid());
+                                        edges.add(new TopologyEdge(ingNodeId, svcNodeId));
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+
+            nsGraph.setNodes(new ArrayList<>(nodes.values()));
+            nsGraph.setEdges(edges);
+            nsGraphs.put(namespace, nsGraph);
         }
 
-        return graph;
+        return new NamespacedGraphResponse(nsGraphs);
     }
 
-    @NotNull
-    private static Map<String, TopologyNode> getTopologyNodeMap(K8sTopologyStore store) {
-        Map<String, TopologyNode> nodeMap = new HashMap<>();
-
-        // ---------------- Nodes ----------------
-
-        for (Deployment dep : store.getDeployments().values()) {
-            TopologyNode node = new TopologyNode(
-                    "deployment:" + dep.getMetadata().getUid(),
-                    dep.getMetadata().getName(),
-                    dep.getMetadata().getNamespace(),
-                    ResourceType.DEPLOYMENT
-            );
-            nodeMap.put(node.getId(), node);
+    // Helper method to find owner reference by kind
+    private OwnerReference findOwnerReference(List<OwnerReference> owners, String kind) {
+        if (owners == null) return null;
+        for (OwnerReference owner : owners) {
+            if (kind.equals(owner.getKind())) {
+                return owner;
+            }
         }
-
-        for (Pod pod : store.getPods().values()) {
-            TopologyNode node = new TopologyNode(
-                    "pod:" + pod.getMetadata().getUid(),
-                    pod.getMetadata().getName(),
-                    pod.getMetadata().getNamespace(),
-                    ResourceType.POD
-            );
-            nodeMap.put(node.getId(), node);
-        }
-
-        for (io.fabric8.kubernetes.api.model.Service svc : store.getServices().values()) {
-            TopologyNode node = new TopologyNode(
-                    "service:" + svc.getMetadata().getUid(),
-                    svc.getMetadata().getName(),
-                    svc.getMetadata().getNamespace(),
-                    ResourceType.SERVICE
-            );
-            nodeMap.put(node.getId(), node);
-        }
-
-        for (Ingress ing : store.getIngresses().values()) {
-            TopologyNode node = new TopologyNode(
-                    "ingress:" + ing.getMetadata().getUid(),
-                    ing.getMetadata().getName(),
-                    ing.getMetadata().getNamespace(),
-                    ResourceType.INGRESS
-            );
-            nodeMap.put(node.getId(), node);
-        }
-
-        for (ConfigMap cm : store.getConfigMaps().values()) {
-            TopologyNode node = new TopologyNode(
-                    "configmap:" + cm.getMetadata().getUid(),
-                    cm.getMetadata().getName(),
-                    cm.getMetadata().getNamespace(),
-                    ResourceType.CONFIGMAP
-            );
-            nodeMap.put(node.getId(), node);
-        }
-
-        for (Secret secret : store.getSecrets().values()) {
-            TopologyNode node = new TopologyNode(
-                    "secret:" + secret.getMetadata().getUid(),
-                    secret.getMetadata().getName(),
-                    secret.getMetadata().getNamespace(),
-                    ResourceType.SECRETS
-            );
-            nodeMap.put(node.getId(), node);
-        }
-        return nodeMap;
+        return null;
     }
 }

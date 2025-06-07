@@ -1,6 +1,6 @@
 package com.raushan.k8smapper.controller;
 
-import com.raushan.k8smapper.model.TopologyGraph;
+import com.raushan.k8smapper.model.NamespacedGraphResponse;
 import com.raushan.k8smapper.service.K8sTopologyStore;
 import com.raushan.k8smapper.service.TopologyBuilderService;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +17,8 @@ public class K8sController {
     private final TopologyBuilderService topologyBuilder;
 
     @GetMapping
-    public TopologyGraph getTopology() {
-        return topologyBuilder.buildGraph(store);
+    public NamespacedGraphResponse getTopology() {
+        return topologyBuilder.buildFromStore(store);
     }
 
 }

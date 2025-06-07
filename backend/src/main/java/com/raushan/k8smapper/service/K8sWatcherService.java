@@ -26,64 +26,71 @@ public class K8sWatcherService {
         try {
             watchResource(client.pods(), ResourceType.POD, (action, pod) -> {
                 String name = pod.getMetadata().getName();
+                String namespace = pod.getMetadata().getNamespace();
                 if (action == Watcher.Action.DELETED) {
-                    topologyStore.removePod(name);
+                    topologyStore.removePod(namespace, name);
                 } else {
-                    topologyStore.upsertPod(name, pod);
+                    topologyStore.upsertPod(namespace, name, pod);
                 }
             });
 
             watchResource(client.apps().deployments(), ResourceType.DEPLOYMENT, (action, deploy) -> {
                 String name = deploy.getMetadata().getName();
+                String namespace = deploy.getMetadata().getNamespace();
                 if (action == Watcher.Action.DELETED) {
-                    topologyStore.removeDeployment(name);
+                    topologyStore.removeDeployment(namespace, name);
                 } else {
-                    topologyStore.upsertDeployment(name, deploy);
+                    topologyStore.upsertDeployment(namespace, name, deploy);
                 }
             });
 
             watchResource(client.apps().replicaSets(), ResourceType.REPLICASET, (action, rs) -> {
                 String name = rs.getMetadata().getName();
+                String namespace = rs.getMetadata().getNamespace();
                 if (action == Watcher.Action.DELETED) {
-                    topologyStore.removeReplicaSet(name);
+                    topologyStore.removeReplicaSet(namespace, name);
                 } else {
-                    topologyStore.upsertReplicaSet(name, rs);
+                    topologyStore.upsertReplicaSet(namespace, name, rs);
                 }
             });
 
             watchResource(client.services(), ResourceType.SERVICE, (action, svc) -> {
                 String name = svc.getMetadata().getName();
+                String namespace = svc.getMetadata().getNamespace();
                 if (action == Watcher.Action.DELETED) {
-                    topologyStore.removeService(name);
+                    topologyStore.removeService(namespace, name);
                 } else {
-                    topologyStore.upsertService(name, svc);
+                    topologyStore.upsertService(namespace, name, svc);
                 }
             });
 
             watchResource(client.network().v1().ingresses(), ResourceType.INGRESS, (action, ing) -> {
                 String name = ing.getMetadata().getName();
+                String namespace = ing.getMetadata().getNamespace();
                 if (action == Watcher.Action.DELETED) {
-                    topologyStore.removeIngress(name);
+                    topologyStore.removeIngress(namespace, name);
                 } else {
-                    topologyStore.upsertIngress(name, ing);
+                    topologyStore.upsertIngress(namespace, name, ing);
                 }
             });
 
             watchResource(client.configMaps(), ResourceType.CONFIGMAP, (action, cm) -> {
                 String name = cm.getMetadata().getName();
+                String namespace = cm.getMetadata().getNamespace();
                 if (action == Watcher.Action.DELETED) {
-                    topologyStore.removeConfigMap(name);
+                    topologyStore.removeConfigMap(namespace, name);
                 } else {
-                    topologyStore.upsertConfigMap(name, cm);
+                    topologyStore.upsertConfigMap(namespace, name, cm);
                 }
             });
 
             watchResource(client.secrets(), ResourceType.SECRETS, (action, sec) -> {
                 String name = sec.getMetadata().getName();
+                String namespace = sec.getMetadata().getNamespace();
                 if (action == Watcher.Action.DELETED) {
-                    topologyStore.removeSecret(name);
+                    topologyStore.removeSecret(namespace, name);
                 } else {
-                    topologyStore.upsertSecret(name, sec);
+                    topologyStore.upsertSecret(namespace, name, sec);
                 }
             });
         } catch (Exception e) {
