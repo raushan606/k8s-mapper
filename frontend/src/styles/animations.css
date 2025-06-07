@@ -1,0 +1,97 @@
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes scaleOut {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(0);
+  }
+}
+
+@keyframes flow {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.node-enter {
+  animation: fadeIn 0.3s ease-in, scaleIn 0.3s ease-out;
+}
+
+.node-exit {
+  animation: fadeOut 0.3s ease-out, scaleOut 0.3s ease-in;
+}
+
+.edge-enter {
+  animation: fadeIn 0.3s ease-in;
+}
+
+.edge-exit {
+  animation: fadeOut 0.3s ease-out;
+}
+
+.flowing-edge {
+  animation: flow 30s linear infinite;
+}
+
+.status-change {
+  transition: border-color 0.3s ease-in-out;
+}
+
+/* Hover effects */
+.node:hover {
+  filter: brightness(1.1);
+  transform: scale(1.05);
+  transition: all 0.2s ease-in-out;
+}
+
+.edge:hover {
+  stroke-width: 3;
+  transition: stroke-width 0.2s ease-in-out;
+}
+
+/* Status colors */
+.status-running {
+  border-color: #4CAF50 !important;
+}
+
+.status-error {
+  border-color: #F44336 !important;
+}
+
+.status-warning {
+  border-color: #FFC107 !important;
+}
+
+.status-pending {
+  border-color: #9E9E9E !important;
+} 
