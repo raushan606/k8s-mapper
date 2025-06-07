@@ -1,5 +1,6 @@
 package com.raushan.k8smapper.service;
 
+import com.raushan.k8smapper.model.ResourceType;
 import com.raushan.k8smapper.websocket.TopologyWebSocketPublisher;
 import io.fabric8.kubernetes.client.*;
 import io.fabric8.kubernetes.client.dsl.*;
@@ -15,15 +16,15 @@ import java.util.logging.Logger;
 public class K8sWatcherService {
 
     private final Logger log = Logger.getLogger(K8sWatcherService.class.getName());
-    private final K8sTopologyStore topologyStore = new K8sTopologyStore();
-    private TopologyWebSocketPublisher topologyWebSocketPublisher;
+    private final K8sTopologyStore topologyStore;
+    private final TopologyWebSocketPublisher topologyWebSocketPublisher;
 
     @PostConstruct
     public void watchAllResources() {
         KubernetesClient client = new KubernetesClientBuilder().build();
 
         try {
-            watchResource(client.pods(), "Pod", (action, pod) -> {
+            watchResource(client.pods(), ResourceType.POD, (action, pod) -> {
                 String name = pod.getMetadata().getName();
                 if (action == Watcher.Action.DELETED) {
                     topologyStore.removePod(name);
@@ -32,7 +33,7 @@ public class K8sWatcherService {
                 }
             });
 
-            watchResource(client.apps().deployments(), "Deployment", (action, deploy) -> {
+            watchResource(client.apps().deployments(), ResourceType.DEPLOYMENT, (action, deploy) -> {
                 String name = deploy.getMetadata().getName();
                 if (action == Watcher.Action.DELETED) {
                     topologyStore.removeDeployment(name);
@@ -41,7 +42,7 @@ public class K8sWatcherService {
                 }
             });
 
-            watchResource(client.apps().replicaSets(), "ReplicaSet", (action, rs) -> {
+            watchResource(client.apps().replicaSets(), ResourceType.REPLICASET, (action, rs) -> {
                 String name = rs.getMetadata().getName();
                 if (action == Watcher.Action.DELETED) {
                     topologyStore.removeReplicaSet(name);
@@ -50,7 +51,7 @@ public class K8sWatcherService {
                 }
             });
 
-            watchResource(client.services(), "Service", (action, svc) -> {
+            watchResource(client.services(), ResourceType.SERVICE, (action, svc) -> {
                 String name = svc.getMetadata().getName();
                 if (action == Watcher.Action.DELETED) {
                     topologyStore.removeService(name);
@@ -59,7 +60,7 @@ public class K8sWatcherService {
                 }
             });
 
-            watchResource(client.network().v1().ingresses(), "Ingress", (action, ing) -> {
+            watchResource(client.network().v1().ingresses(), ResourceType.INGRESS, (action, ing) -> {
                 String name = ing.getMetadata().getName();
                 if (action == Watcher.Action.DELETED) {
                     topologyStore.removeIngress(name);
@@ -68,7 +69,7 @@ public class K8sWatcherService {
                 }
             });
 
-            watchResource(client.configMaps(), "ConfigMap", (action, cm) -> {
+            watchResource(client.configMaps(), ResourceType.CONFIGMAP, (action, cm) -> {
                 String name = cm.getMetadata().getName();
                 if (action == Watcher.Action.DELETED) {
                     topologyStore.removeConfigMap(name);
@@ -77,7 +78,7 @@ public class K8sWatcherService {
                 }
             });
 
-            watchResource(client.secrets(), "Secret", (action, sec) -> {
+            watchResource(client.secrets(), ResourceType.SECRETS, (action, sec) -> {
                 String name = sec.getMetadata().getName();
                 if (action == Watcher.Action.DELETED) {
                     topologyStore.removeSecret(name);
@@ -92,7 +93,8 @@ public class K8sWatcherService {
         }
     }
 
-    private <T> void watchResource(MixedOperation<T, ?, ?> resourceClient, String resourceType, BiConsumer<Watcher.Action, T> handler) {
+    private <T> void watchResource(MixedOperation<T, ?, ?> resourceClient, ResourceType resourceType,
+                                   BiConsumer<Watcher.Action, T> handler) {
         resourceClient.watch(new Watcher<>() {
             @Override
             public void eventReceived(Action action, T resource) {

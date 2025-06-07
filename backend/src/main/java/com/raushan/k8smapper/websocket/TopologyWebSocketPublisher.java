@@ -28,7 +28,8 @@ public class TopologyWebSocketPublisher {
         sessions.remove(handler);
     }
 
-    @Scheduled(fixedRate = 5000)
+    // TODO: Uncomment to enable periodic updates
+//    @Scheduled(fixedRate = 5000)
     public void publishGraph() {
         TopologyGraph graph = topologyBuilder.buildGraph(topologyStore);
 

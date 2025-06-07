@@ -8,12 +8,13 @@ import io.fabric8.kubernetes.api.model.apps.ReplicaSet;
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import lombok.Getter;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
-@Component
+@Service
 public class K8sTopologyStore {
     private final Map<String, Pod> pods = new ConcurrentHashMap<>();
     private final Map<String, Deployment> deployments = new ConcurrentHashMap<>();
