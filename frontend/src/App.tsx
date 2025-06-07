@@ -71,9 +71,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     if (lastMessage) {
       try {
-        console.log('Raw WebSocket message:', lastMessage.data);
         const data = JSON.parse(lastMessage.data) as K8sWebSocketData;
-        console.log('Parsed WebSocket data:', data);
 
         // Extract namespaces for the dropdown
         const namespaceList = Object.entries(data.namespaces).map(([id, ns]) => ({
@@ -82,7 +80,6 @@ export const App: React.FC = () => {
           podCount: ns.nodes.filter(node => node.type === ResourceType.POD).length,
           color: ns.nodes.some(node => node.type === ResourceType.POD) ? '#3ECF8E' : '#A3A3A3',
         }));
-        console.log('Extracted namespaces:', namespaceList);
 
         // Extract all nodes and edges from namespaces
         const allNodes: K8sNodeData[] = Object.entries(data.namespaces).flatMap(([namespaceId, ns], namespaceIndex) => {
@@ -109,9 +106,6 @@ export const App: React.FC = () => {
 
         const allEdges = Object.values(data.namespaces).flatMap(ns => ns.edges);
 
-        console.log('All nodes:', allNodes);
-        console.log('All edges:', allEdges);
-
         setNamespaces(namespaceList);
         setTopologyData({
           nodes: allNodes,
@@ -127,7 +121,6 @@ export const App: React.FC = () => {
   }, [lastMessage]);
 
   const handleNamespaceChange = (namespaceId: string | null) => {
-    console.log('Namespace changed to:', namespaceId);
     setSelectedNamespace(namespaceId);
   };
 
