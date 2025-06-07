@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import useWebSocket from 'react-use-websocket';
 import { TopologyGraph } from './components/TopologyGraph/TopologyGraph';
 import { MainLayout } from './components/Layout/MainLayout';
@@ -33,7 +33,7 @@ export const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const { lastMessage, readyState, sendMessage } = useWebSocket(WS_URL, {
+  const { lastMessage, readyState, sendMessage, getWebSocket } = useWebSocket(WS_URL, {
     shouldReconnect: (closeEvent: CloseEvent) => true,
     reconnectInterval: 3000,
     retryOnError: true,
@@ -49,6 +49,24 @@ export const App: React.FC = () => {
       console.log('WebSocket connection closed:', event.code, event.reason);
     },
   });
+
+  const handleRefresh = useCallback(() => {
+    setLoading(true);
+    const ws = getWebSocket();
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      // Send a refresh message to the server
+      sendMessage(JSON.stringify({ type: 'refresh' }));
+    } else {
+      // If WebSocket is not open, try to reconnect
+      ws?.close();
+      setTimeout(() => {
+        const newWs = new WebSocket(WS_URL);
+        newWs.onopen = () => {
+          sendMessage(JSON.stringify({ type: 'refresh' }));
+        };
+      }, 1000);
+    }
+  }, [getWebSocket, sendMessage]);
 
   useEffect(() => {
     if (lastMessage) {
@@ -115,7 +133,7 @@ export const App: React.FC = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <MainLayout>
+      <MainLayout onRefresh={handleRefresh}>
         <Sidebar
           namespaces={namespaces}
           selectedNamespace={selectedNamespace}

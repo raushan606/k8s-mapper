@@ -4,15 +4,16 @@ import { TopBar } from './TopBar';
 
 interface MainLayoutProps {
     children: [ReactNode, ReactNode]; // [Sidebar, MainContent]
+    onRefresh: () => void;
 }
 
-export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
+export const MainLayout: React.FC<MainLayoutProps> = ({ children, onRefresh }) => {
     const [sidebar, mainContent] = children;
 
     return (
         <Box sx={{ height: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
             {/* TopBar */}
-            <TopBar />
+            <TopBar onRefresh={onRefresh} />
             {/* Main area: Sidebar + Content */}
             <Box sx={{ display: 'flex', flex: 1, minHeight: 0 }}>
                 {/* Sidebar */}

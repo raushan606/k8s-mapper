@@ -14,7 +14,11 @@ import SearchIcon from '@mui/icons-material/Search';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import AddIcon from '@mui/icons-material/Add';
 
-export const TopBar: React.FC = () => {
+interface TopBarProps {
+  onRefresh: () => void;
+}
+
+export const TopBar: React.FC<TopBarProps> = ({ onRefresh }) => {
   return (
     <AppBar position="static" elevation={0} sx={{ bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider', zIndex: 1201 }}>
       <Toolbar sx={{ minHeight: 64, px: 3, display: 'flex', justifyContent: 'space-between' }}>
@@ -30,7 +34,7 @@ export const TopBar: React.FC = () => {
           </Typography>
         </Box>
         {/* Search Bar */}
-        <Paper
+        {/* <Paper
           component="form"
           sx={{
             p: '2px 8px',
@@ -49,13 +53,24 @@ export const TopBar: React.FC = () => {
             placeholder="Search nodes, pods, services..."
             inputProps={{ 'aria-label': 'search' }}
           />
-        </Paper>
+        </Paper> */}
         {/* Actions */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <IconButton color="primary" sx={{ bgcolor: 'background.default', border: '1px solid #E5E7EB', mr: 1 }}>
+          <IconButton 
+            color="primary" 
+            sx={{ 
+              bgcolor: 'background.default', 
+              border: '1px solid #E5E7EB', 
+              mr: 1,
+              '&:hover': {
+                bgcolor: 'rgba(62, 207, 142, 0.1)',
+              }
+            }}
+            onClick={onRefresh}
+          >
             <RefreshIcon />
           </IconButton>
-          <Button
+          {/* <Button
             variant="contained"
             startIcon={<AddIcon />}
             sx={{
@@ -70,10 +85,10 @@ export const TopBar: React.FC = () => {
             }}
           >
             Deploy
-          </Button>
+          </Button> */}
           <Avatar
             alt="User"
-            src="https://randomuser.me/api/portraits/men/32.jpg"
+            src="https://avatars.githubusercontent.com/u/25031628?v=4"
             sx={{ width: 36, height: 36, ml: 2 }}
           />
         </Box>

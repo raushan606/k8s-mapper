@@ -50,31 +50,12 @@ export const MainContent: React.FC<MainContentProps> = ({
                 {/* Title and Namespace Context */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
                     <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary', mr: 2 }}>
-                        Cluster Topology
+                        Namespace Topology
                     </Typography>
                     <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500 }}>
-                        {namespace ? namespace : 'default namespace'}
+                        {namespace ? namespace : 'All namespaces'}
                     </Typography>
                     <Box sx={{ flex: 1 }} />
-                    <IconButton color="primary" sx={{ mr: 1 }}>
-                        <RefreshIcon />
-                    </IconButton>
-                    <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        sx={{
-                            bgcolor: '#3ECF8E',
-                            color: '#fff',
-                            textTransform: 'none',
-                            fontWeight: 600,
-                            borderRadius: 2,
-                            boxShadow: 'none',
-                            px: 2.5,
-                            '&:hover': { bgcolor: '#36b87c' },
-                        }}
-                    >
-                        Deploy
-                    </Button>
                 </Box>
                 {/* Topology Graph Card */}
                 <Paper elevation={0} sx={{ p: 2, mb: 3, borderRadius: 3, border: '1px solid #E5E7EB', minHeight: 420, position: 'relative' }}>
