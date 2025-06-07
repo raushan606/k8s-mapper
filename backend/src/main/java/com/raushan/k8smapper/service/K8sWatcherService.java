@@ -27,8 +27,11 @@ public class K8sWatcherService {
                 @Override
                 public void eventReceived(Action action, Pod resource) {
                     String podName = resource.getMetadata().getName();
-                    System.out.println("Received event: " + action.name() + " for pod: " + podName);
+                    String message = action.name() + " -> " + podName;
                     log.info("Received event: " + action.name() + " for pod: " + podName);
+
+                    // Broadcast the event to all WebSocket sessions
+                    PodWebSocketHandler.broadcast(message);
                 }
 
                 @Override
