@@ -133,7 +133,7 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
         ...edge,
         type: 'turbo',
         animated: true,
-        markerEnd: 'url(#edge-circle)',
+        markerEnd: 'url(#arrowhead)',
       }));
 
       setNodes(flowNodes);
@@ -184,7 +184,7 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
           defaultEdgeOptions={{
             type: 'turbo',
             animated: true,
-            markerEnd: 'url(#edge-circle)',
+            markerEnd: 'url(#arrowhead)',
           }}
           style={{
             background: 'transparent',
@@ -193,10 +193,9 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
           }}
         >
           <Background
-            color={theme.palette.mode === 'dark' ? theme.palette.background.default : '#F3F4F6'}
             gap={16}
             size={1}
-            style={{ opacity: 0.2 }}
+            style={{ opacity: 0.6 }}
           />
           <svg>
             <defs>
@@ -206,15 +205,16 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
                 <stop offset="100%" stopColor="#EC4899" stopOpacity={0.8} />
               </linearGradient>
               <marker
-                id="edge-circle"
-                viewBox="-5 -5 10 10"
-                refX="0"
-                refY="0"
-                markerWidth="6"
-                markerHeight="6"
+                id="arrowhead"
+                viewBox="0 0 10 10"
+                refX="9"
+                refY="5"
+                markerUnits="strokeWidth"
+                markerWidth="3"
+                markerHeight="3"
                 orient="auto"
               >
-                <circle cx="0" cy="0" r="3" fill="#8B5CF6" />
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#EC4899" />
               </marker>
             </defs>
           </svg>

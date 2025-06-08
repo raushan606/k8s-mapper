@@ -26,7 +26,7 @@ const TurboEdge = ({
     <>
       <BaseEdge
         path={edgePath}
-        markerEnd="url(#edge-circle)"
+        markerEnd="url(#arrowhead)"
         style={{
           ...style,
           stroke: 'url(#edge-gradient)',
