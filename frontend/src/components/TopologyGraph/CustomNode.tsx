@@ -47,6 +47,10 @@ const CustomNode = ({ data }: NodeProps) => {
         return '🔒';
       case ResourceType.CONFIGMAP:
         return '⚙️';
+      case ResourceType.PVC:
+        return '🫙'
+      case ResourceType.PV:
+        return '💾'
       default:
         return '❓';
     }

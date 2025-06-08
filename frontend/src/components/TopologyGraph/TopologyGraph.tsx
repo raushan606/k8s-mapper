@@ -9,7 +9,6 @@ import ReactFlow, {
   useEdgesState,
   ReactFlowProvider,
   useNodes,
-  useReactFlow,
   getConnectedEdges,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
@@ -37,7 +36,6 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
   const edgesRef = useRef<Edge[]>([]);
 
   // Use React Flow's built-in hooks for node data and connections
-  const reactFlowInstance = useReactFlow();
   const allNodes = useNodes();
 
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
@@ -126,11 +124,11 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
 
       // Apply layout to nodes and edges
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodesForLayout, combinedEdges);
-        setNodes(layoutedNodes);
-        setEdges(layoutedEdges);
-        if (onLoad) {
-          onLoad();
-        }
+      setNodes(layoutedNodes);
+      setEdges(layoutedEdges);
+      if (onLoad) {
+        onLoad();
+      }
 
     } else {
       setNodes([]);
@@ -143,9 +141,8 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
       sx={{
         width: '100%',
         height: '100%',
-        bgcolor: 'transparent',
-        borderRadius: 3,
-        boxShadow: '0 2px 16px 0 rgba(0,0,0,0.06)',
+        bgcolor: 'white',
+        borderRadius: 0,
         p: 0,
         overflow: 'hidden',
         position: 'relative',
@@ -172,7 +169,7 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
             markerEnd: 'url(#arrowhead)',
           }}
           style={{
-            background: 'transparent',
+            // background: 'transparent',
             width: '100%',
             height: '100%',
           }}
@@ -186,14 +183,14 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
           <svg>
             <defs>
               <linearGradient id="edge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#6366F1" stopOpacity={0.8} />
-                <stop offset="50%" stopColor="#8B5CF6" stopOpacity={0.8} />
-                <stop offset="100%" stopColor="#EC4899" stopOpacity={0.8} />
+                <stop offset="0%" stopColor="#11E6F1" stopOpacity={0.8} />
+                <stop offset="50%" stopColor="#925CF6" stopOpacity={0.8} />
+                <stop offset="100%" stopColor="#0C4099" stopOpacity={0.8} />
               </linearGradient>
               <marker
                 id="arrowhead"
                 viewBox="0 0 10 10"
-                refX="9"
+                refX="7"
                 refY="5"
                 markerUnits="strokeWidth"
                 markerWidth="3"
