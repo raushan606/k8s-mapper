@@ -8,12 +8,16 @@ import com.raushan.k8smapper.model.TopologyNode;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.EnvFromSource;
+import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.OwnerReference;
+import io.fabric8.kubernetes.api.model.PersistentVolume;
+import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.ReplicaSet;
+import io.fabric8.kubernetes.api.model.networking.v1.HTTPIngressRuleValue;
 import io.fabric8.kubernetes.api.model.networking.v1.Ingress;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +27,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -54,6 +59,8 @@ public class TopologyBuilderService {
             Function<String, String> cmId = uid -> "configmap:" + uid;
             Function<String, String> secretId = uid -> "secret:" + uid;
             Function<String, String> ingressId = uid -> "ingress:" + uid;
+            Function<String, String> pvcId = uid -> "pvc:" + uid;
+            Function<String, String> pvId = uid -> "pv:" + uid;
 
             // Add all resources as nodes
 
@@ -106,8 +113,21 @@ public class TopologyBuilderService {
                 nodes.put(id, new TopologyNode(id, name, namespace, ResourceType.INGRESS));
             });
 
-            // Now add edges
+            // PersistentVolumeClaims
+            Map<String, PersistentVolumeClaim> pvcs = store.getPVCByNamespace().getOrDefault(namespace, Collections.emptyMap());
+            pvcs.forEach((name, pvc) -> {
+                String id = pvcId.apply(pvc.getMetadata().getUid());
+                nodes.put(id, new TopologyNode(id, name, namespace, ResourceType.PVC));
+            });
 
+            // PersistentVolumes
+            Map<String, PersistentVolume> pvs = store.getPVByNamespace().getOrDefault(namespace, Collections.emptyMap());
+            pvs.forEach((name, pv) -> {
+                String id = pvId.apply(pv.getMetadata().getUid());
+                nodes.put(id, new TopologyNode(id, name, namespace, ResourceType.PV));
+            });
+
+            // Now add edges
             // 1. Service -> Pod (via selector)
             services.forEach((name, svc) -> {
                 String svcNodeId = serviceId.apply(svc.getMetadata().getUid());
@@ -117,13 +137,13 @@ public class TopologyBuilderService {
                         Map<String, String> labels = pod.getMetadata().getLabels();
                         if (labels != null && labels.entrySet().containsAll(selector.entrySet())) {
                             String podNodeId = podId.apply(pod.getMetadata().getUid());
-                            edges.add(new TopologyEdge(svcNodeId, podNodeId));
+                            edges.add(new TopologyEdge(svcNodeId, podNodeId)); // Dashed edge
                         }
                     });
                 }
             });
 
-            // 2. Deployment -> ReplicaSet (deployment owns replicasets)
+            // 2. Deployment -> ReplicaSet (via ownerReference)
             replicaSets.forEach((rsName, rs) -> {
                 String rsNodeId = rsId.apply(rs.getMetadata().getUid());
                 OwnerReference owner = findOwnerReference(rs.getMetadata().getOwnerReferences(), "Deployment");
@@ -131,13 +151,13 @@ public class TopologyBuilderService {
                     deployments.forEach((depName, dep) -> {
                         if (dep.getMetadata().getUid().equals(owner.getUid())) {
                             String depNodeId = deploymentId.apply(dep.getMetadata().getUid());
-                            edges.add(new TopologyEdge(depNodeId, rsNodeId));
+                            edges.add(new TopologyEdge(depNodeId, rsNodeId)); // Solid edge
                         }
                     });
                 }
             });
 
-            // 3. ReplicaSet -> Pod (replicaset owns pods)
+            // 3. ReplicaSet -> Pod (via ownerReference)
             pods.forEach((podName, pod) -> {
                 String podNodeId = podId.apply(pod.getMetadata().getUid());
                 OwnerReference owner = findOwnerReference(pod.getMetadata().getOwnerReferences(), "ReplicaSet");
@@ -145,108 +165,130 @@ public class TopologyBuilderService {
                     replicaSets.forEach((rsName, rs) -> {
                         if (rs.getMetadata().getUid().equals(owner.getUid())) {
                             String rsNodeId = rsId.apply(rs.getMetadata().getUid());
-                            edges.add(new TopologyEdge(rsNodeId, podNodeId));
+                            edges.add(new TopologyEdge(rsNodeId, podNodeId)); // Solid edge
                         }
                     });
                 }
             });
 
-            // 4. Pod -> ConfigMap (via volumes or envFrom)
+            // 4. Deployment -> Pod (derived path via RS)
+            deployments.forEach((depName, dep) -> {
+                String depNodeId = deploymentId.apply(dep.getMetadata().getUid());
+                pods.forEach((podName, pod) -> {
+                    OwnerReference rsOwner = findOwnerReference(pod.getMetadata().getOwnerReferences(), "ReplicaSet");
+                    if (rsOwner != null) {
+                        replicaSets.forEach((rsName, rs) -> {
+                            OwnerReference depOwner = findOwnerReference(rs.getMetadata().getOwnerReferences(), "Deployment");
+                            if (depOwner != null && depOwner.getUid().equals(dep.getMetadata().getUid())
+                                    && rs.getMetadata().getUid().equals(rsOwner.getUid())) {
+                                String podNodeId = podId.apply(pod.getMetadata().getUid());
+                                edges.add(new TopologyEdge(depNodeId, podNodeId)); // Dashed (derived)
+                            }
+                        });
+                    }
+                });
+            });
+
+            // 5. Pod -> ConfigMap
             pods.forEach((podName, pod) -> {
                 String podNodeId = podId.apply(pod.getMetadata().getUid());
 
-                // Check volumes
-                if (pod.getSpec() != null && pod.getSpec().getVolumes() != null) {
-                    for (Volume vol : pod.getSpec().getVolumes()) {
-                        if (vol.getConfigMap() != null) {
-                            String cmName = vol.getConfigMap().getName();
-                            configMaps.forEach((cmNameKey, cm) -> {
-                                if (cmNameKey.equals(cmName)) {
-                                    String cmNodeId = cmId.apply(cm.getMetadata().getUid());
-                                    edges.add(new TopologyEdge(podNodeId, cmNodeId));
-                                }
-                            });
-                        }
-                    }
-                }
-
-                // Check envFrom configMaps
-                if (pod.getSpec() != null && pod.getSpec().getContainers() != null) {
-                    for (Container container : pod.getSpec().getContainers()) {
-                        if (container.getEnvFrom() != null) {
-                            for (EnvFromSource envFrom : container.getEnvFrom()) {
-                                if (envFrom.getConfigMapRef() != null) {
-                                    String cmName = envFrom.getConfigMapRef().getName();
-                                    configMaps.forEach((cmNameKey, cm) -> {
-                                        if (cmNameKey.equals(cmName)) {
-                                            String cmNodeId = cmId.apply(cm.getMetadata().getUid());
-                                            edges.add(new TopologyEdge(podNodeId, cmNodeId));
-                                        }
-                                    });
-                                }
+                if (pod.getSpec() != null) {
+                    // From volumes
+                    Optional.ofNullable(pod.getSpec().getVolumes()).ifPresent(volumes -> {
+                        for (Volume vol : volumes) {
+                            if (vol.getConfigMap() != null) {
+                                String cmName = vol.getConfigMap().getName();
+                                addEdgeIfExists(cmName, configMaps, cmId, edges, podNodeId);
                             }
                         }
-                    }
-                }
-            });
+                    });
 
-            // 5. Pod -> Secret (via volumes or envFrom)
-            pods.forEach((podName, pod) -> {
-                String podNodeId = podId.apply(pod.getMetadata().getUid());
-
-                // Volumes
-                if (pod.getSpec() != null && pod.getSpec().getVolumes() != null) {
-                    for (Volume vol : pod.getSpec().getVolumes()) {
-                        if (vol.getSecret() != null) {
-                            String secretName = vol.getSecret().getSecretName();
-                            secrets.forEach((secretNameKey, sec) -> {
-                                if (secretNameKey.equals(secretName)) {
-                                    String secretNodeId = secretId.apply(sec.getMetadata().getUid());
-                                    edges.add(new TopologyEdge(podNodeId, secretNodeId));
-                                }
-                            });
-                        }
-                    }
-                }
-
-                // EnvFrom secrets
-                if (pod.getSpec() != null && pod.getSpec().getContainers() != null) {
-                    for (Container container : pod.getSpec().getContainers()) {
-                        if (container.getEnvFrom() != null) {
-                            for (EnvFromSource envFrom : container.getEnvFrom()) {
-                                if (envFrom.getSecretRef() != null) {
-                                    String secretName = envFrom.getSecretRef().getName();
-                                    secrets.forEach((secretNameKey, sec) -> {
-                                        if (secretNameKey.equals(secretName)) {
-                                            String secretNodeId = secretId.apply(sec.getMetadata().getUid());
-                                            edges.add(new TopologyEdge(podNodeId, secretNodeId));
-                                        }
-                                    });
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
-            // 6. Ingress -> Service (via ingress backend serviceName)
-            ingresses.forEach((ingName, ing) -> {
-                String ingNodeId = ingressId.apply(ing.getMetadata().getUid());
-                if (ing.getSpec() != null && ing.getSpec().getRules() != null) {
-                    ing.getSpec().getRules().forEach(rule -> {
-                        if (rule.getHttp() != null && rule.getHttp().getPaths() != null) {
-                            rule.getHttp().getPaths().forEach(path -> {
-                                if (path.getBackend() != null && path.getBackend().getService() != null) {
-                                    String backendSvcName = path.getBackend().getService().getName();
-                                    io.fabric8.kubernetes.api.model.Service svc = services.get(backendSvcName);
-                                    if (svc != null) {
-                                        String svcNodeId = serviceId.apply(svc.getMetadata().getUid());
-                                        edges.add(new TopologyEdge(ingNodeId, svcNodeId));
+                    // From envFrom
+                    Optional.ofNullable(pod.getSpec().getContainers()).ifPresent(containers -> {
+                        for (Container container : containers) {
+                            Optional.ofNullable(container.getEnvFrom()).ifPresent(envSources -> {
+                                for (EnvFromSource envFrom : envSources) {
+                                    if (envFrom.getConfigMapRef() != null) {
+                                        String cmName = envFrom.getConfigMapRef().getName();
+                                        addEdgeIfExists(cmName, configMaps, cmId, edges, podNodeId);
                                     }
                                 }
                             });
                         }
                     });
+                }
+            });
+
+            // 6. Pod -> Secret
+            pods.forEach((podName, pod) -> {
+                String podNodeId = podId.apply(pod.getMetadata().getUid());
+
+                if (pod.getSpec() != null) {
+                    Optional.ofNullable(pod.getSpec().getVolumes()).ifPresent(volumes -> {
+                        for (Volume vol : volumes) {
+                            if (vol.getSecret() != null) {
+                                String secretName = vol.getSecret().getSecretName();
+                                addEdgeIfExists(secretName, secrets, secretId, edges, podNodeId);
+                            }
+                        }
+                    });
+
+                    Optional.ofNullable(pod.getSpec().getContainers()).ifPresent(containers -> {
+                        for (Container container : containers) {
+                            Optional.ofNullable(container.getEnvFrom()).ifPresent(envSources -> {
+                                for (EnvFromSource envFrom : envSources) {
+                                    if (envFrom.getSecretRef() != null) {
+                                        String secretName = envFrom.getSecretRef().getName();
+                                        addEdgeIfExists(secretName, secrets, secretId, edges, podNodeId);
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+
+            // 7. Ingress -> Service
+            ingresses.forEach((ingName, ing) -> {
+                String ingNodeId = ingressId.apply(ing.getMetadata().getUid());
+                Optional.ofNullable(ing.getSpec().getRules()).ifPresent(rules -> {
+                    rules.forEach(rule -> {
+                        Optional.ofNullable(rule.getHttp()).map(HTTPIngressRuleValue::getPaths).ifPresent(paths -> {
+                            paths.forEach(path -> {
+                                if (path.getBackend() != null && path.getBackend().getService() != null) {
+                                    String svcName = path.getBackend().getService().getName();
+                                    addEdgeIfExists(svcName, services, serviceId, edges, ingNodeId);
+                                }
+                            });
+                        });
+                    });
+                });
+            });
+
+            // 8. Pod -> PVC
+            pods.forEach((podName, pod) -> {
+                String podNodeId = podId.apply(pod.getMetadata().getUid());
+                Optional.ofNullable(pod.getSpec().getVolumes()).ifPresent(volumes -> {
+                    for (Volume vol : volumes) {
+                        if (vol.getPersistentVolumeClaim() != null) {
+                            String pvcName = vol.getPersistentVolumeClaim().getClaimName();
+                            addEdgeIfExists(pvcName, pvcs, pvcId, edges, podNodeId);
+                        }
+                    }
+                });
+            });
+
+            // 9. PVC -> PV
+            pvcs.forEach((pvcName, pvc) -> {
+                String pvcNodeId = pvcId.apply(pvc.getMetadata().getUid());
+                String volumeName = pvc.getSpec().getVolumeName();
+                if (volumeName != null) {
+                    PersistentVolume pv = pvs.get(volumeName);
+                    if (pv != null) {
+                        String pvNodeId = pvId.apply(pv.getMetadata().getUid());
+                        edges.add(new TopologyEdge(pvcNodeId, pvNodeId)); // Solid edge
+                    }
                 }
             });
 
@@ -267,5 +309,14 @@ public class TopologyBuilderService {
             }
         }
         return null;
+    }
+
+    private <T> void addEdgeIfExists(String name, Map<String, T> resources, Function<String, String> idFn,
+                                     List<TopologyEdge> edges, String fromNodeId) {
+        T target = resources.get(name);
+        if (target != null) {
+            String toNodeId = idFn.apply(((HasMetadata) target).getMetadata().getUid());
+            edges.add(new TopologyEdge(fromNodeId, toNodeId));
+        }
     }
 }

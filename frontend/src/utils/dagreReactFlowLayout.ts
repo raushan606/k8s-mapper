@@ -7,8 +7,19 @@ dagreGraph.setDefaultEdgeLabel(() => ({}));
 const nodeWidth = 170;
 const nodeHeight = 100;
 
-export const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => {
-  dagreGraph.setGraph({ rankdir: direction });
+export const getLayoutedElements = (nodes: Node[], edges: Edge[], direction: 'TB' | 'LR' = 'LR') => {
+  const numNodes = nodes.length;
+
+  // Dynamically adjust ranksep and nodesep based on the number of nodes
+  // These values are experimental and can be fine-tuned.
+  const dynamicRanksep = Math.max(150, Math.min(350, 100 + numNodes * 10)); // Base 100, add 5px per node, max 300
+  const dynamicNodesep = Math.max(100, Math.min(250, 50 + numNodes * 15));   // Base 50, add 2px per node, max 150
+
+  dagreGraph.setGraph({
+    rankdir: direction,
+    ranksep: dynamicRanksep,
+    nodesep: dynamicNodesep,
+  });
 
   nodes.forEach((node) => {
     dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });

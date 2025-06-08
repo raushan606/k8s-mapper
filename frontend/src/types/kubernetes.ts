@@ -8,7 +8,9 @@ export const enum ResourceType {
   DEPLOYMENT = 'DEPLOYMENT',
   REPLICASET = 'REPLICASET',
   SECRETS = 'SECRETS',
-  CONFIGMAP = 'CONFIGMAP'
+  CONFIGMAP = 'CONFIGMAP',
+  PVC = 'PVC',
+  PV = 'PV'
 }
 
 export interface KubernetesResource {

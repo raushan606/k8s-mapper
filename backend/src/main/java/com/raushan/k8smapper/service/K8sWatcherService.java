@@ -94,6 +94,24 @@ public class K8sWatcherService {
                         topologyStore.upsertSecret(namespace, name, sec);
                     }
                 });
+
+                watchResource(client.persistentVolumeClaims().inNamespace(namespace), ResourceType.PVC, (action, pvc) -> {
+                    String name = pvc.getMetadata().getName();
+                    if (action == Watcher.Action.DELETED) {
+                        topologyStore.removePVC(namespace, name);
+                    } else {
+                        topologyStore.upsertPVC(namespace, name, pvc);
+                    }
+                });
+
+                watchResource(client.persistentVolumes(), ResourceType.PV, (action, pv) -> {
+                    String name = pv.getMetadata().getName();
+                    if (action == Watcher.Action.DELETED) {
+                        topologyStore.removePV(namespace, name);
+                    } else {
+                        topologyStore.upsertPV(namespace, name, pv);
+                    }
+                });
             }
         } catch (Exception e) {
             log.severe("Error while setting up resource watchers: " + e.getMessage());

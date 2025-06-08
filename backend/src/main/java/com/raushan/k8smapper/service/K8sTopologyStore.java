@@ -23,6 +23,8 @@ public class K8sTopologyStore {
     private final Map<String, Map<String, Ingress>> ingressesByNamespace = new ConcurrentHashMap<>();
     private final Map<String, Map<String, ConfigMap>> configMapsByNamespace = new ConcurrentHashMap<>();
     private final Map<String, Map<String, Secret>> secretsByNamespace = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, PersistentVolumeClaim>> pVCByNamespace = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, PersistentVolume>> pVByNamespace = new ConcurrentHashMap<>();
 
     // Generic upsert helper
     private <T> void upsert(Map<String, Map<String, T>> map, String namespace, String name, T obj) {
@@ -69,6 +71,14 @@ public class K8sTopologyStore {
         upsert(secretsByNamespace, namespace, name, sec);
     }
 
+    public void upsertPVC(String namespace, String name, PersistentVolumeClaim pvc) {
+        upsert(pVCByNamespace, namespace, name, pvc);
+    }
+
+    public void upsertPV(String namespace, String name, PersistentVolume pv) {
+        upsert(pVByNamespace, namespace, name, pv);
+    }
+
     // Remove Methods
     public void removePod(String namespace, String name) {
         remove(podsByNamespace, namespace, name);
@@ -98,6 +108,14 @@ public class K8sTopologyStore {
         remove(secretsByNamespace, namespace, name);
     }
 
+    public void removePVC(String namespace, String name) {
+        remove(pVCByNamespace, namespace, name);
+    }
+
+    public void removePV(String namespace, String name) {
+        remove(pVByNamespace, namespace, name);
+    }
+
     // Utility: get all distinct namespaces used
     public Set<String> getNamespaces() {
         return Stream.of(
@@ -107,7 +125,9 @@ public class K8sTopologyStore {
                 servicesByNamespace.keySet(),
                 ingressesByNamespace.keySet(),
                 configMapsByNamespace.keySet(),
-                secretsByNamespace.keySet()
+                secretsByNamespace.keySet(),
+                pVCByNamespace.keySet(),
+                pVByNamespace.keySet()
         ).flatMap(Set::stream).collect(Collectors.toSet());
     }
 }

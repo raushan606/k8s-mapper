@@ -78,6 +78,37 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
         return acc;
       }, {} as Record<string, NodeData[]>);
 
+      // Identify all target nodes from existing edges
+      const existingTargetIds = new Set(filteredEdges.map(edge => edge.target));
+
+      // Add implicit edges from namespace nodes to root resource nodes
+      const implicitEdges: Edge[] = [];
+      Object.entries(nodesByNamespace).forEach(([namespaceId, nsNodes]) => {
+        // Find the namespace node itself
+        const namespaceNode = nsNodes.find(node => node.id === namespaceId && node.type === ResourceType.NAMESPACE);
+
+        if (namespaceNode) {
+          nsNodes.forEach(node => {
+            // If it's a resource node (not the namespace node itself) and has no incoming edges,
+            // create an implicit edge from the namespace.
+            if (node.type !== ResourceType.NAMESPACE && !existingTargetIds.has(node.id)) {
+              implicitEdges.push({
+                id: `namespace-${namespaceId}-to-${node.id}`,
+                source: namespaceId,
+                target: node.id,
+                type: 'turbo',
+                animated: true,
+                markerEnd: 'url(#arrowhead)',
+              });
+            }
+          });
+        }
+      });
+
+      const combinedEdges = [...filteredEdges, ...implicitEdges];
+
+      console.log("Combined Edges for Layout:", combinedEdges);
+
       // Prepare nodes for layout, ensuring they have an id, type, and data structure consistent with ReactFlow Node
       const nodesForLayout: Node[] = Object.entries(nodesByNamespace).flatMap(([, nsNodes]) => {
         return nsNodes.map(node => ({
@@ -94,7 +125,7 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
       });
 
       // Apply layout to nodes and edges
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodesForLayout, filteredEdges);
+      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodesForLayout, combinedEdges);
         setNodes(layoutedNodes);
         setEdges(layoutedEdges);
         if (onLoad) {

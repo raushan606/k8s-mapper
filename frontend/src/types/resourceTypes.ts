@@ -1,4 +1,4 @@
-export type ResourceType = 'POD' | 'INGRESS' | 'SERVICE' | 'DEPLOYMENT' | 'REPLICASET' | 'SECRETS' | 'CONFIGMAP';
+export type ResourceType = 'POD' | 'INGRESS' | 'SERVICE' | 'DEPLOYMENT' | 'REPLICASET' | 'SECRETS' | 'CONFIGMAP' | 'PVC' | 'PV';
 
 export interface K8sNode {
     id: string;
