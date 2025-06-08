@@ -1,13 +1,12 @@
-
 # 🚀 Live Kubernetes Mapping Tool
 
-_Visualize your Kubernetes apps in real time — see what’s running, how it connects, and where it’s breaking._
+_Visualize your Kubernetes apps in real time — see what's running, how it connects, and where it's breaking._
 
 ---
 
 ## 📘 Overview
 
-The Live Kubernetes Mapping Tool provides a **real-time, animated map of your applications and infrastructure** running inside a Kubernetes cluster. It’s a developer-first tool that turns complex deployments into a visual, interactive graph with insights into the relationships between workloads, services, ingress routes, and configurations.
+The Live Kubernetes Mapping Tool provides a **real-time, animated map of your applications and infrastructure** running inside a Kubernetes cluster. It's a developer-first tool that turns complex deployments into a visual, interactive graph with insights into the relationships between workloads, services, ingress routes, and configurations.
 
 ---
 
@@ -37,28 +36,29 @@ The Live Kubernetes Mapping Tool provides a **real-time, animated map of your ap
 
 - Fetches initial topology via REST
 - Connects to live updates via WebSocket
-- Uses **Cytoscape.js**, **Reaflow**, or **Vis.js** for rendering animated DAG/graph
-- Animates:
+- Uses **Reaflow**, **Dagre** for rendering animated DAG/graph
+<!-- - Animates:
   - Pod creation/removal
   - Service routing lines
-  - Config/Secret mounts appearing/disappearing
-  - Status changes
+  - Config/Secret 
+  <!-- mounts appearing/disappearing -->
+
+  <!-- - Status changes  -->
 
 ---
 
-## 🧑‍💻 Developer Interactions
+<!-- ## 🧑‍💻 Developer Interactions
 
 - **Click Node** → Show metadata, mounted configs, pod logs
 - **Hover** → Tooltip with labels/status
 - **Filters**:
   - Namespace
   - Label selector
-  - Resource type
-- **Legend** for colors, edge types (traffic, mount)
+  - Resource type -->
 
 ---
 
-## 🧩 Bonus Features
+<!-- ## 🧩 Bonus Features
 
 ### ✅ 1. Export as Image or Diagram
 - SVG, PNG, PDF exports
@@ -82,10 +82,10 @@ The Live Kubernetes Mapping Tool provides a **real-time, animated map of your ap
 - Can be used standalone or inside:
   - Grafana
   - Backstage
-  - Custom portals
+  - Custom portals -->
 
 ---
-
+<!-- 
 ## 🔌 APIs & Endpoints
 
 ### REST
@@ -107,7 +107,7 @@ Pushes JSON deltas:
     "status": "Running"
   }
 }
-```
+``` -->
 
 ---
 
@@ -115,11 +115,11 @@ Pushes JSON deltas:
 
 | Layer       | Technology                         |
 |-------------|------------------------------------|
-| Backend     | Java, Spring Boot or Quarkus       |
-| K8s Client  | Fabric8 Kubernetes Client          |
-| Frontend    | React (or Svelte/Vue)              |
-| Animation   | Cytoscape.js / Reaflow / Vis.js    |
-| Styling     | Tailwind CSS / Chakra UI           |
+| Backend     | Java 21, Spring Boot 3.2.5         |
+| K8s Client  | Fabric8 Kubernetes Client 7.3.1    |
+| Frontend    | React 19.1.0, TypeScript 4.9.5     |
+| Animation   | ReactFlow, Dagre                   |
+| Styling     | Material-UI               |
 | Comm Layer  | REST + WebSocket                   |
 | Deployment  | Docker, Helm, Kubernetes           |
 
@@ -130,3 +130,64 @@ Pushes JSON deltas:
 - GitOps integration
 - Live linting of topology
 - AI assistant for suggestions and troubleshooting
+
+## 🚀 Getting Started
+
+Follow these steps to get the Live Kubernetes Mapping Tool up and running on your local machine.
+
+### Prerequisites
+
+-   **Java 21**: For the backend service.
+-   **Node.js & npm/yarn**: For the frontend application.
+-   **Docker**: To build and run container images.
+-   **kubectl**: Configured to connect to your Kubernetes cluster (e.g., Minikube, Docker Desktop Kubernetes, or a remote cluster).
+-   **Gradle**: To build the backend.
+
+### Backend Setup
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/your-repo/k8s-mapper.git
+    cd k8s-mapper/backend
+    ```
+2.  **Build the backend:**
+    ```bash
+    ./gradlew build
+    ```
+3.  **Run the backend:**
+    ```bash
+    java -jar build/libs/k8s-mapper-backend-1.0-SNAPSHOT.jar
+    ```
+    The backend will start listening for Kubernetes events and serving the API.
+
+### Frontend Setup
+
+1.  **Navigate to the frontend directory:**
+    ```bash
+    cd ../frontend
+    ```
+2.  **Install dependencies:**
+    ```bash
+    npm install # or yarn
+    ```
+3.  **Start the frontend development server:**
+    ```bash
+    npm start # or yarn start
+    ```
+    The frontend application will typically be available at `http://localhost:3000`.
+
+### Connecting to Kubernetes
+
+Ensure your `kubectl` is configured to the desired cluster. The backend will automatically use your current Kubernetes context.
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! If you're interested in improving this project, please consider:
+
+-   Reporting bugs
+-   Suggesting features
+-   Submitting pull requests
+
+Please read our `CONTRIBUTING.md` (to be created) for details on our code of conduct, and the process for submitting pull requests to us.
