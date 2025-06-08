@@ -37,7 +37,7 @@ const generateNodePosition = (index: number, total: number, namespaceIndex: numb
 
 const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespace, onLoad }) => {
   const theme = useTheme();
-  const nodeTypes = React.useMemo(() => ({ turbo: CustomNode }), []);
+  const nodeTypes = React.useMemo(() => ({ custom: CustomNode }), []);
   const edgeTypes = React.useMemo(() => ({ turbo: TurboEdge }), []);
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -121,7 +121,7 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
 
         return {
           id: node.id,
-          type: 'turbo',
+          type: 'custom',
           position: node.position!,
           data: nodeData,
         };
@@ -132,7 +132,7 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
         ...edge,
         type: 'turbo',
         animated: true,
-        markerEnd: 'edge-circle',
+        markerEnd: 'url(#edge-circle)',
       }));
 
       setNodes(flowNodes);
@@ -180,7 +180,7 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
           defaultEdgeOptions={{
             type: 'turbo',
             animated: true,
-            markerEnd: 'edge-circle',
+            markerEnd: 'url(#edge-circle)',
           }}
           style={{
             background: 'transparent',

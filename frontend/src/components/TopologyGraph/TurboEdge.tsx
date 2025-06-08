@@ -1,8 +1,7 @@
 import React from 'react';
-import { getBezierPath, type EdgeProps } from 'reactflow';
+import { BaseEdge, EdgeProps, getBezierPath } from 'reactflow';
 
-export default function TurboEdge({
-  id,
+const TurboEdge = ({
   sourceX,
   sourceY,
   targetX,
@@ -11,31 +10,32 @@ export default function TurboEdge({
   targetPosition,
   style = {},
   markerEnd,
-}: EdgeProps) {
-  const xEqual = sourceX === targetX;
-  const yEqual = sourceY === targetY;
-
+}: EdgeProps) => {
   const [edgePath] = getBezierPath({
-    // we need this little hack in order to display the gradient for a straight line
-    sourceX: xEqual ? sourceX + 0.0001 : sourceX,
-    sourceY: yEqual ? sourceY + 0.0001 : sourceY,
+    sourceX,
+    sourceY,
     sourcePosition,
     targetX,
     targetY,
     targetPosition,
   });
 
-  console.log("TurboEdge edgePath:", edgePath);
+  console.log("TurboEdge rendering, edgePath:", edgePath);
 
   return (
     <>
-      <path
-        id={id}
-        style={style}
-        className="react-flow__edge-path"
-        d={edgePath}
-        markerEnd={markerEnd}
+      <BaseEdge
+        path={edgePath}
+        markerEnd="url(#edge-circle)"
+        style={{
+          ...style,
+          stroke: 'url(#edge-gradient)',
+          strokeWidth: 4,
+          opacity: 0.8,
+        }}
       />
     </>
   );
-} 
+};
+
+export default TurboEdge; 
