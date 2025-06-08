@@ -65,7 +65,7 @@ export const MainContent: React.FC<MainContentProps> = ({
                     left: 0,
                     right: 0,
                     zIndex: 1,
-                    background: 'linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 100%)',
+                    background: 'linear-gradient(to bottom, rgba(31,41,55,0.9) 0%, rgba(31,41,55,0) 100%)',
                     pointerEvents: 'none'
                 }}>
                     <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500, textAlign: 'center', width: '100%' }}>

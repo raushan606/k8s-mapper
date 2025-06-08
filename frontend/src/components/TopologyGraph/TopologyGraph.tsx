@@ -14,9 +14,9 @@ import ReactFlow, {
   MarkerType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Box } from '@mui/material';
-import { CustomNode } from './CustomNode';
-import { CustomEdge } from './CustomEdge';
+import { Box, useTheme } from '@mui/material';
+import CustomNode from './CustomNode';
+import TurboEdge from './TurboEdge';
 import { NodeDetailsPanel } from './NodeDetailsPanel';
 import { TopologyData, ResourceType, NodeData } from '../../types/kubernetes';
 
@@ -36,8 +36,9 @@ const generateNodePosition = (index: number, total: number, namespaceIndex: numb
 };
 
 const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespace, onLoad }) => {
-  const nodeTypes = React.useMemo(() => ({ custom: CustomNode }), []);
-  const edgeTypes = React.useMemo(() => ({ custom: CustomEdge }), []);
+  const theme = useTheme();
+  const nodeTypes = React.useMemo(() => ({ turbo: CustomNode }), []);
+  const edgeTypes = React.useMemo(() => ({ turbo: TurboEdge }), []);
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -120,7 +121,7 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
 
         return {
           id: node.id,
-          type: 'custom',
+          type: 'turbo',
           position: node.position!,
           data: nodeData,
         };
@@ -129,13 +130,9 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
       // Convert edges to ReactFlow format with proper styling
       const flowEdges: Edge[] = filteredEdges.map(edge => ({
         ...edge,
-        type: 'smoothstep',
+        type: 'turbo',
         animated: true,
-        style: { stroke: '#8B5CF6' },
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          color: '#8B5CF6',
-        },
+        markerEnd: 'edge-circle',
       }));
 
       setNodes(flowNodes);
@@ -157,7 +154,7 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
       sx={{
         width: '100%',
         height: '100%',
-        bgcolor: '#fff',
+        bgcolor: 'transparent',
         borderRadius: 3,
         boxShadow: '0 2px 16px 0 rgba(0,0,0,0.06)',
         p: 0,
@@ -181,13 +178,9 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
           fitView
           attributionPosition="bottom-left"
           defaultEdgeOptions={{
-            type: 'smoothstep',
+            type: 'turbo',
             animated: true,
-            style: { stroke: '#8B5CF6' },
-            markerEnd: {
-              type: MarkerType.ArrowClosed,
-              color: '#8B5CF6',
-            },
+            markerEnd: 'edge-circle',
           }}
           style={{
             background: 'transparent',
@@ -196,18 +189,38 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
           }}
         >
           <Background
-            color="#F3F4F6"
+            color={theme.palette.mode === 'dark' ? theme.palette.background.default : '#F3F4F6'}
             gap={16}
             size={1}
             style={{ opacity: 0.2 }}
           />
+          <svg>
+            <defs>
+              <linearGradient id="edge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#6366F1" stopOpacity={0.8} />
+                <stop offset="50%" stopColor="#8B5CF6" stopOpacity={0.8} />
+                <stop offset="100%" stopColor="#EC4899" stopOpacity={0.8} />
+              </linearGradient>
+              <marker
+                id="edge-circle"
+                viewBox="-5 -5 10 10"
+                refX="0"
+                refY="0"
+                markerWidth="6"
+                markerHeight="6"
+                orient="auto"
+              >
+                <circle cx="0" cy="0" r="3" fill="#8B5CF6" />
+              </marker>
+            </defs>
+          </svg>
           <Controls
             position='top-left'
             style={{
               left: 10,
               top: 10,
-              backgroundColor: 'rgba(255,255,255,0.9)',
-              border: '1px solid #E5E7EB',
+              backgroundColor: theme.palette.background.paper,
+              border: `1px solid ${theme.palette.divider}`,
               borderRadius: '8px',
               padding: '8px',
             }}
@@ -218,8 +231,8 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
             style={{
               right: 10,
               top: 10,
-              backgroundColor: 'rgba(255,255,255,0.9)',
-              border: '1px solid #E5E7EB',
+              backgroundColor: theme.palette.background.paper,
+              border: `1px solid ${theme.palette.divider}`,
               borderRadius: '8px',
               padding: '8px',
             }}

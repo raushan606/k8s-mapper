@@ -24,11 +24,17 @@ export const TopBar: React.FC<TopBarProps> = ({ onRefresh }) => {
       <Toolbar sx={{ minHeight: 64, px: 3, display: 'flex', justifyContent: 'space-between' }}>
         {/* Logo/Name */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Box sx={{ width: 32, height: 32, bgcolor: '#3ECF8E', borderRadius: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', mr: 1 }}>
-            <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700, fontSize: '1.25rem', letterSpacing: 1 }}>
-              K
-            </Typography>
-          </Box>
+          <Box 
+            component="img"
+            src="/letter-k.png"
+            alt="K Logo"
+            sx={{ 
+              width: 32, 
+              height: 32, 
+              objectFit: 'contain',
+              mr: 1 
+            }}
+          />
           <Typography variant="h6" sx={{ color: 'text.primary', fontWeight: 700, fontSize: '1.1rem', letterSpacing: 0.5 }}>
             Kubernetes Topology
           </Typography>

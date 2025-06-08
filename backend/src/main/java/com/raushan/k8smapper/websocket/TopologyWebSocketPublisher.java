@@ -28,7 +28,7 @@ public class TopologyWebSocketPublisher {
     }
 
     // TODO: Uncomment to enable periodic updates
-    @Scheduled(fixedRate = 10000)
+    @Scheduled(fixedRate = 30000)
     public void publishGraph() {
         var graph = topologyBuilder.buildFromStore(topologyStore);
 
