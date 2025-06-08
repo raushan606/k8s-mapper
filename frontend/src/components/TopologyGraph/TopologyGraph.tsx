@@ -9,7 +9,6 @@ import ReactFlow, {
   useEdgesState,
   ReactFlowProvider,
   useNodes,
-  useReactFlow,
   getConnectedEdges,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
@@ -45,7 +44,6 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
   const edgesRef = useRef<Edge[]>([]);
 
   // Use React Flow's built-in hooks for node data and connections
-  const reactFlowInstance = useReactFlow();
   const allNodes = useNodes();
 
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
@@ -76,8 +74,6 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
         })
         : initialData.edges;
 
-        console.log("Filter Edges", filteredEdges)
-
       // Organize nodes by namespace
       const nodesByNamespace = filteredNodes.reduce((acc, node) => {
         const ns = node.namespace || 'default';
@@ -89,7 +85,7 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
       }, {} as Record<string, NodeData[]>);
 
       // Calculate positions for nodes ensuring all have a position
-      const layoutedNodes = Object.entries(nodesByNamespace).flatMap(([ns, nsNodes], nsIndex) => {
+      const layoutedNodes = Object.entries(nodesByNamespace).flatMap(([, nsNodes], nsIndex) => {
         const namespaceX = nsIndex * 600;
         const namespaceY = 0;
 
@@ -138,7 +134,6 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
 
       setNodes(flowNodes);
       setEdges(flowEdges);
-      console.log("Flow Edges: ", flowEdges)
     } else {
       setNodes([]);
       setEdges([]);
