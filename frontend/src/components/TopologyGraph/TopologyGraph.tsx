@@ -9,6 +9,7 @@ import ReactFlow, {
   useEdgesState,
   ReactFlowProvider,
   useNodes,
+  useReactFlow,
   getConnectedEdges,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
@@ -17,21 +18,13 @@ import CustomNode from './CustomNode';
 import TurboEdge from './TurboEdge';
 import { NodeDetailsPanel } from './NodeDetailsPanel';
 import { TopologyData, ResourceType, NodeData } from '../../types/kubernetes';
+import { getLayoutedElements } from '../../utils/dagreReactFlowLayout';
 
 interface TopologyGraphProps {
   initialData: TopologyData;
   namespace: string | null | undefined;
   onLoad?: () => void;
 }
-
-// Helper function to generate a position for a node
-const generateNodePosition = (index: number, total: number, namespaceIndex: number) => {
-  const radius = 400;
-  const angle = (index / total) * 3 * Math.PI;
-  const x = radius * Math.cos(angle) + namespaceIndex * 400;
-  const y = radius * Math.sin(angle);
-  return { x, y };
-};
 
 const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespace, onLoad }) => {
   const theme = useTheme();
@@ -44,6 +37,7 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
   const edgesRef = useRef<Edge[]>([]);
 
   // Use React Flow's built-in hooks for node data and connections
+  const reactFlowInstance = useReactFlow();
   const allNodes = useNodes();
 
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
@@ -84,69 +78,34 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
         return acc;
       }, {} as Record<string, NodeData[]>);
 
-      // Calculate positions for nodes ensuring all have a position
-      const layoutedNodes = Object.entries(nodesByNamespace).flatMap(([, nsNodes], nsIndex) => {
-        const namespaceX = nsIndex * 600;
-        const namespaceY = 0;
-
-        return nsNodes.map((node, index) => {
-          let position = node.position;
-
-          if (!position) {
-            if (node.type === ResourceType.NAMESPACE) {
-              position = { x: namespaceX, y: namespaceY };
-            } else {
-              position = generateNodePosition(index, nsNodes.length, nsIndex);
-            }
-          }
-
-          return {
-            ...node,
-            position: position,
-          };
-        });
-      });
-
-      // Convert nodes to ReactFlow format with computed data
-      const flowNodes: Node[] = layoutedNodes.map(node => {
-        const nodeData = {
-          ...node,
-          label: node.name,
-          connections: getConnectedEdges([{ id: node.id } as Node], edgesRef.current),
-          computedData: allNodes.find(n => n.id === node.id)?.data || {},
-        };
-
-        return {
+      // Prepare nodes for layout, ensuring they have an id, type, and data structure consistent with ReactFlow Node
+      const nodesForLayout: Node[] = Object.entries(nodesByNamespace).flatMap(([, nsNodes]) => {
+        return nsNodes.map(node => ({
           id: node.id,
           type: 'custom',
-          position: node.position!,
-          data: nodeData,
-        };
+          position: { x: 0, y: 0 }, // Initial position for layout algorithm, will be overwritten by dagre
+          data: {
+            ...node,
+            label: node.name,
+            connections: getConnectedEdges([{ id: node.id } as Node], edgesRef.current),
+            computedData: allNodes.find(n => n.id === node.id)?.data || {},
+          },
+        }));
       });
 
-      // Convert edges to ReactFlow format with proper styling
-      const flowEdges: Edge[] = filteredEdges.map(edge => ({
-        ...edge,
-        type: 'turbo',
-        animated: true,
-        markerEnd: 'url(#arrowhead)',
-      }));
+      // Apply layout to nodes and edges
+      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodesForLayout, filteredEdges);
+        setNodes(layoutedNodes);
+        setEdges(layoutedEdges);
+        if (onLoad) {
+          onLoad();
+        }
 
-      setNodes(flowNodes);
-      setEdges(flowEdges);
     } else {
       setNodes([]);
       setEdges([]);
     }
-  }, [initialData, namespace, setNodes, setEdges]);
-
-
-
-  useEffect(() => {
-    if (onLoad) {
-      onLoad();
-    }
-  }, [onLoad]);
+  }, [initialData, namespace, setNodes, setEdges, onLoad]);
 
   return (
     <Box
@@ -188,6 +147,7 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
           }}
         >
           <Background
+            color={theme.palette.mode === 'dark' ? theme.palette.background.default : '#F3F4F6'}
             gap={16}
             size={1}
             style={{ opacity: 0.6 }}
