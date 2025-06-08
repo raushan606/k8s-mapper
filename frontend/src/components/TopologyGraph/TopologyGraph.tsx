@@ -11,7 +11,6 @@ import ReactFlow, {
   useNodes,
   useReactFlow,
   getConnectedEdges,
-  MarkerType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Box, useTheme } from '@mui/material';
@@ -77,6 +76,8 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
         })
         : initialData.edges;
 
+        console.log("Filter Edges", filteredEdges)
+
       // Organize nodes by namespace
       const nodesByNamespace = filteredNodes.reduce((acc, node) => {
         const ns = node.namespace || 'default';
@@ -137,11 +138,14 @@ const TopologyGraphInner: React.FC<TopologyGraphProps> = ({ initialData, namespa
 
       setNodes(flowNodes);
       setEdges(flowEdges);
+      console.log("Flow Edges: ", flowEdges)
     } else {
       setNodes([]);
       setEdges([]);
     }
   }, [initialData, namespace, setNodes, setEdges]);
+
+
 
   useEffect(() => {
     if (onLoad) {

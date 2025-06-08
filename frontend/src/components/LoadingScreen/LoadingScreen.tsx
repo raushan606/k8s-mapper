@@ -59,9 +59,8 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
   return (
     <LoadingContainer>
       <Typography 
-        variant="h5" 
+        variant="h1" 
         sx={{ 
-          color: 'text.primary',
           fontWeight: 600,
           mb: 2
         }}
